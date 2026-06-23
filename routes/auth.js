@@ -1,0 +1,96 @@
+const express  = require('express');
+const jwt       = require('jsonwebtoken');
+const User      = require('../models/User');
+const authenticateToken = require('../middleware/auth');
+
+const router     = express.Router();
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey_changeme_in_production';
+const JWT_EXPIRES = '7d';
+
+function issueToken(user) {
+    return jwt.sign(
+        { id: user._id, name: user.name, email: user.email },
+        JWT_SECRET,
+        { expiresIn: JWT_EXPIRES }
+    );
+}
+
+/* ─── POST /api/auth/register ─── */
+router.post('/register', async (req, res) => {
+    try {
+        const { name, email, password } = req.body;
+
+        if (!name || !email || !password)
+            return res.status(400).json({ error: 'Name, email, and password are required.' });
+        if (password.length < 6)
+            return res.status(400).json({ error: 'Password must be at least 6 characters.' });
+
+        const exists = await User.findOne({ email: email.toLowerCase().trim() });
+        if (exists)
+            return res.status(409).json({ error: 'An account with this email already exists.' });
+
+        const user = await User.create({ name: name.trim(), email, password });
+
+        const token = issueToken(user);
+        res.status(201).json({
+            token,
+            user: { id: user._id, name: user.name, email: user.email },
+        });
+    } catch (err) {
+        console.error('Register error:', err);
+        res.status(500).json({ error: 'Server error during registration.' });
+    }
+});
+
+/* ─── POST /api/auth/login ─── */
+router.post('/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        if (!email || !password)
+            return res.status(400).json({ error: 'Email and password are required.' });
+
+        // Must explicitly select password since it has select:false in the schema
+        const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+password');
+        if (!user)
+            return res.status(401).json({ error: 'Invalid email or password.' });
+
+        const valid = await user.comparePassword(password);
+        if (!valid)
+            return res.status(401).json({ error: 'Invalid email or password.' });
+
+        const token = issueToken(user);
+        res.json({
+            token,
+            user: { id: user._id, name: user.name, email: user.email },
+        });
+    } catch (err) {
+        console.error('Login error:', err);
+        res.status(500).json({ error: 'Server error during login.' });
+    }
+});
+
+/* ─── GET /api/auth/me ─── */
+router.get('/me', authenticateToken, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ error: 'User not found.' });
+        res.json({ user: { id: user._id, name: user.name, email: user.email } });
+    } catch (err) {
+        res.status(500).json({ error: 'Server error.' });
+    }
+});
+
+/* ─── GET /api/auth/role ─── */
+// Returns whether the calling user is the "owner" (first registered account by createdAt).
+router.get('/role', authenticateToken, async (req, res) => {
+    try {
+        const oldest = await User.findOne().sort({ createdAt: 1 }).select('_id');
+        const isOwner = oldest && oldest._id.toString() === req.user.id.toString();
+        res.json({ isOwner, userId: req.user.id });
+    } catch (err) {
+        res.status(500).json({ error: 'Server error.' });
+    }
+});
+
+module.exports = router;

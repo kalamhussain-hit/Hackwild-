@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BookShelf — Your Personal Reading Tracker</title>
+    <meta name="description" content="BookShelf is your beautiful personal reading tracker. Log books, track your progress, and explore your library.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+/* ==================== TOKENS ==================== */
+:root {
+    --bg:        #060810;
+    --bg2:       #0d1021;
+    --bg3:       #131629;
+    --surface:   rgba(255,255,255,0.04);
+    --surface-h: rgba(255,255,255,0.08);
+    --border:    rgba(255,255,255,0.06);
+    --border-h:  rgba(255,255,255,0.15);
+
+    --v:  #7c6af7;
+    --v2: #a78bfa;
+    --v3: #c4b5fd;
+    --vg: linear-gradient(135deg,#7c6af7,#a78bfa);
+    --vg2:linear-gradient(135deg,#6d5ce8,#9b7af0,#c4b5fd);
+    --og: linear-gradient(135deg,#f97316,#f59e0b);
+    --glow: rgba(124,106,247,0.4);
+    --glow2:rgba(124,106,247,0.15);
+
+    --txt:    #eaecfc;
+    --muted:  #8890b8;
+    --dim:    #3d4468;
+
+    --green:  #34d399;
+    --yellow: #fbbf24;
+    --blue:   #60a5fa;
+    --red:    #f87171;
+    --orange: #f97316;
+
+    --r:  16px;
+    --rs: 10px;
+    --sh: 0 20px 60px rgba(0,0,0,0.6);
+    --t:  0.22s cubic-bezier(.4,0,.2,1);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+    font-family:'Inter',sans-serif;
+    background:var(--bg);
+    color:var(--txt);
+    min-height:100vh;
+    overflow-x:hidden;
+}
+
+/* ==================== CANVAS BG ==================== */
+#bgCanvas{
+    position:fixed;inset:0;z-index:0;
+    pointer-events:none;
+}
+
+/* ==================== PAGES ==================== */
+#app{position:relative;z-index:1;}
+.page{display:none;min-height:100vh;}
+.page.active{display:block;}
+
+/* ==================== GLOBAL ANIMATIONS ==================== */
+@keyframes fadeUp{
+    from{opacity:0;transform:translateY(28px);}
+    to{opacity:1;transform:translateY(0);}
+}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+@keyframes scaleIn{
+    from{opacity:0;transform:scale(0.9);}
+    to{opacity:1;transform:scale(1);}
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.5;}}
+@keyframes shimmer{
+    0%{background-position:-200% center;}
+    100%{background-position:200% center;}
+}
+@keyframes float{
+    0%,100%{transform:translateY(0) rotate(0deg);}
+    33%{transform:translateY(-12px) rotate(1deg);}
+    66%{transform:translateY(-6px) rotate(-1deg);}
+}
+@keyframes glow-pulse{
+    0%,100%{box-shadow:0 0 20px var(--glow);}
+    50%{box-shadow:0 0 50px var(--glow),0 0 80px var(--glow2);}
+}
+@keyframes slide-in-right{
+    from{opacity:0;transform:translateX(30px);}
+    to{opacity:1;transform:translateX(0);}
+}
+@keyframes slide-in-left{
+    from{opacity:0;transform:translateX(-30px);}
+    to{opacity:1;transform:translateX(0);}
+}
+@keyframes bounce-in{
+    0%{transform:scale(0.3);opacity:0;}
+    50%{transform:scale(1.08);}
+    70%{transform:scale(0.95);}
+    100%{transform:scale(1);opacity:1;}
+}
+@keyframes text-gradient-shift{
+    0%{background-position:0% 50%;}
+    50%{background-position:100% 50%;}
+    100%{background-position:0% 50%;}
+}
+@keyframes card-enter{
+    from{opacity:0;transform:translateY(20px) scale(0.96);}
+    to{opacity:1;transform:translateY(0) scale(1);}
+}
+@keyframes ring-spin{
+    from{transform:rotate(0deg);}
+    to{transform:rotate(360deg);}
+}
+@keyframes morph{
+    0%,100%{border-radius:60% 40% 30% 70% / 60% 30% 70% 40%;}
+    50%{border-radius:30% 60% 70% 40% / 50% 60% 30% 60%;}
+}
+
+/* ==================== BUTTONS ==================== */
+.btn{
+    display:inline-flex;align-items:center;justify-content:center;
+    gap:0.45rem;padding:0.72rem 1.5rem;
+    border-radius:var(--rs);font-family:'Inter',sans-serif;
+    font-size:0.9rem;font-weight:600;cursor:pointer;
+    border:none;transition:all var(--t);line-height:1;
+    white-space:nowrap;position:relative;overflow:hidden;
+}
+.btn::after{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(rgba(255,255,255,0.08),transparent);
+    opacity:0;transition:opacity var(--t);
+}
+.btn:hover::after{opacity:1;}
+.btn-primary{
+    background:var(--vg);color:#fff;
+    box-shadow:0 4px 20px var(--glow);
+}
+.btn-primary:hover{
+    transform:translateY(-2px);
+    box-shadow:0 8px 35px var(--glow);
+}
+.btn-primary:active{transform:translateY(0);}
+.btn-ghost{
+    background:var(--surface);border:1px solid var(--border);color:var(--txt);
+}
+.btn-ghost:hover{background:var(--surface-h);border-color:var(--border-h);}
+.btn-danger{
+    background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.2);
+    color:var(--red);
+}
+.btn-danger:hover{background:rgba(248,113,113,0.2);}
+.btn-sm{padding:0.4rem 0.9rem;font-size:0.8rem;}
+.btn-lg{padding:1rem 2.2rem;font-size:1rem;border-radius:var(--r);}
+.btn-block{width:100%;}
+.btn-shimmer{
+    background-size:200% auto;
+    background:linear-gradient(90deg,#7c6af7,#a78bfa,#c4b5fd,#a78bfa,#7c6af7);
+    background-size:200% auto;
+    animation:shimmer 2.5s linear infinite;
+    color:#fff;box-shadow:0 4px 20px var(--glow);
+}
+
+/* ==================== FORMS ==================== */
+.field{margin-bottom:1.1rem;}
+.field label{
+    display:block;font-size:0.72rem;font-weight:700;
+    color:var(--muted);text-transform:uppercase;
+    letter-spacing:0.08em;margin-bottom:0.45rem;
+}
+.field input,.field select,.field textarea{
+    width:100%;padding:0.8rem 1rem;
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--border);
+    border-radius:var(--rs);color:var(--txt);
+    font-family:'Inter',sans-serif;font-size:0.92rem;
+    outline:none;
+    transition:border-color var(--t),box-shadow var(--t),background var(--t);
+}
+.field input:focus,.field select:focus,.field textarea:focus{
+    border-color:var(--v);box-shadow:0 0 0 3px rgba(124,106,247,0.2);
+    background:rgba(124,106,247,0.04);
+}
+.field textarea{resize:vertical;min-height:90px;}
+.field select option{background:#1a1d2e;}
+
+.error-msg{
+    background:rgba(248,113,113,0.08);
+    border:1px solid rgba(248,113,113,0.25);
+    color:var(--red);border-radius:var(--rs);
+    padding:0.7rem 1rem;font-size:0.85rem;
+    margin-bottom:1rem;display:none;
+    animation:fadeUp 0.2s ease;
+}
+.error-msg.show{display:block;}
+
+/* ==================== NAVBAR ==================== */
+.nav{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0.9rem 2rem;
+    background:rgba(6,8,16,0.85);
+    backdrop-filter:blur(20px);
+    border-bottom:1px solid var(--border);
+    position:sticky;top:0;z-index:100;
+    animation:fadeIn 0.4s ease;
+}
+.nav-brand{
+    display:flex;align-items:center;gap:0.6rem;
+    font-size:1.15rem;font-weight:800;text-decoration:none;
+    cursor:pointer;
+}
+.nav-brand .logo-icon{
+    font-size:1.5rem;
+    animation:float 6s ease-in-out infinite;
+    display:inline-block;
+}
+.nav-brand em{
+    font-style:normal;
+    background:linear-gradient(135deg,#7c6af7,#a78bfa,#c4b5fd);
+    background-size:200% auto;
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    background-clip:text;
+    animation:text-gradient-shift 4s ease infinite;
+}
+.nav-right{display:flex;align-items:center;gap:0.75rem;}
+.nav-user{font-size:0.85rem;color:var(--muted);}
+.nav-user strong{color:var(--txt);}
+.owner-badge{
+    display:inline-flex;align-items:center;gap:0.3rem;
+    background:linear-gradient(135deg,rgba(249,115,22,0.15),rgba(245,158,11,0.15));
+    border:1px solid rgba(249,115,22,0.3);color:var(--orange);
+    padding:0.2rem 0.7rem;border-radius:999px;
+    font-size:0.7rem;font-weight:700;
+    text-transform:uppercase;letter-spacing:0.06em;
+    animation:glow-pulse 3s ease-in-out infinite;
+}
+
+/* ==================== LANDING PAGE ==================== */
+#landingPage{display:none;flex-direction:column;}
+#landingPage.active{display:flex;}
+
+.landing-nav{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:1.25rem 2.5rem;
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    background:rgba(6,8,16,0.7);
+    backdrop-filter:blur(16px);
+    border-bottom:1px solid var(--border);
+    animation:fadeIn 0.5s ease;
+}
+
+/* HERO */
+.hero{
+    min-height:100vh;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    text-align:center;padding:8rem 2rem 4rem;
+    position:relative;overflow:hidden;
+}
+.hero-eyebrow{
+    display:inline-flex;align-items:center;gap:0.5rem;
+    background:rgba(124,106,247,0.1);
+    border:1px solid rgba(124,106,247,0.3);
+    color:var(--v3);padding:0.4rem 1.1rem;border-radius:999px;
+    font-size:0.78rem;font-weight:600;letter-spacing:0.06em;
+    margin-bottom:2rem;
+    animation:fadeUp 0.6s 0.1s ease both;
+}
+.eyebrow-dot{
+    width:6px;height:6px;border-radius:50%;
+    background:var(--v2);animation:pulse 2s ease-in-out infinite;
+}
+.hero h1{
+    font-family:'Playfair Display',serif;
+    font-size:clamp(3rem,8vw,6.5rem);
+    font-weight:800;line-height:1.05;
+    margin-bottom:1.5rem;
+    animation:fadeUp 0.7s 0.2s ease both;
+    letter-spacing:-0.02em;
+}
+.gradient-text{
+    background:linear-gradient(135deg,#7c6af7,#a78bfa,#c4b5fd,#a78bfa,#7c6af7);
+    background-size:300% auto;
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    background-clip:text;
+    animation:text-gradient-shift 5s ease infinite;
+}
+.hero p{
+    font-size:clamp(1rem,2vw,1.2rem);color:var(--muted);
+    max-width:560px;line-height:1.8;margin-bottom:3rem;
+    animation:fadeUp 0.7s 0.3s ease both;
+}
+.hero-cta{
+    display:flex;gap:1rem;flex-wrap:wrap;
+    justify-content:center;
+    animation:fadeUp 0.7s 0.4s ease both;
+}
+
+/* Floating book decorations */
+.hero-deco{
+    position:absolute;pointer-events:none;user-select:none;
+    font-size:2.5rem;opacity:0.12;filter:blur(1px);
+}
+.hero-deco:nth-child(1){top:15%;left:8%;animation:float 8s ease-in-out infinite;}
+.hero-deco:nth-child(2){top:25%;right:10%;animation:float 10s 1s ease-in-out infinite;}
+.hero-deco:nth-child(3){bottom:25%;left:12%;animation:float 7s 2s ease-in-out infinite;}
+.hero-deco:nth-child(4){bottom:30%;right:8%;animation:float 9s 0.5s ease-in-out infinite;}
+.hero-deco:nth-child(5){top:60%;left:5%;animation:float 11s 1.5s ease-in-out infinite;}
+
+/* Morphing bg blobs */
+.hero-blob{
+    position:absolute;border-radius:60% 40% 30% 70% / 60% 30% 70% 40%;
+    pointer-events:none;filter:blur(60px);
+    animation:morph 12s ease-in-out infinite;
+}
+.hero-blob-1{
+    width:500px;height:500px;
+    background:rgba(124,106,247,0.07);
+    top:-10%;left:-10%;
+    animation-duration:15s;
+}
+.hero-blob-2{
+    width:400px;height:400px;
+    background:rgba(167,139,250,0.06);
+    bottom:-5%;right:-5%;
+    animation-duration:12s;animation-direction:reverse;
+}
+
+/* Scroll cue */
+.scroll-cue{
+    position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);
+    display:flex;flex-direction:column;align-items:center;gap:0.4rem;
+    color:var(--dim);font-size:0.75rem;
+    animation:fadeIn 1s 1.5s ease both;
+}
+.scroll-mouse{
+    width:22px;height:36px;border:2px solid var(--dim);
+    border-radius:11px;display:flex;justify-content:center;
+    padding-top:6px;
+}
+.scroll-wheel{
+    width:3px;height:8px;background:var(--dim);
+    border-radius:2px;animation:scroll-anim 2s ease-in-out infinite;
+}
+@keyframes scroll-anim{
+    0%{opacity:1;transform:translateY(0);}
+    100%{opacity:0;transform:translateY(12px);}
+}
+
+/* FEATURES */
+.features-section{
+    max-width:1150px;margin:0 auto;padding:6rem 2rem;
+}
+.section-label{
+    text-align:center;font-size:0.78rem;font-weight:700;
+    color:var(--v2);text-transform:uppercase;letter-spacing:0.1em;
+    margin-bottom:0.8rem;
+}
+.section-title{
+    text-align:center;font-family:'Playfair Display',serif;
+    font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;
+    margin-bottom:3.5rem;line-height:1.2;
+}
+.features-grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    gap:1.25rem;
+}
+.feature-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--r);padding:2rem;
+    transition:all 0.35s cubic-bezier(.4,0,.2,1);
+    position:relative;overflow:hidden;
+    cursor:default;
+}
+.feature-card::before{
+    content:'';position:absolute;inset:0;
+    background:var(--vg);
+    opacity:0;transition:opacity 0.4s;
+    border-radius:inherit;
+}
+.feature-card:hover{
+    border-color:rgba(124,106,247,0.4);
+    transform:translateY(-6px) scale(1.01);
+    box-shadow:0 20px 60px rgba(124,106,247,0.15);
+}
+.feature-card:hover::before{opacity:0.04;}
+.feature-icon{
+    font-size:2.5rem;margin-bottom:1.25rem;display:block;
+    transition:transform 0.3s ease;
+}
+.feature-card:hover .feature-icon{transform:scale(1.15) rotate(-5deg);}
+.feature-card h3{font-size:1rem;font-weight:700;margin-bottom:0.6rem;}
+.feature-card p{font-size:0.875rem;color:var(--muted);line-height:1.65;}
+.feature-tag{
+    display:inline-block;
+    background:rgba(124,106,247,0.12);
+    border:1px solid rgba(124,106,247,0.2);
+    color:var(--v3);padding:0.15rem 0.6rem;
+    border-radius:999px;font-size:0.7rem;font-weight:700;
+    margin-top:0.75rem;
+}
+
+/* SHOWCASE mockup */
+.showcase-section{
+    max-width:860px;margin:0 auto;padding:0 2rem 8rem;text-align:center;
+}
+.mock-app{
+    background:var(--bg2);border:1px solid var(--border-h);
+    border-radius:20px;overflow:hidden;
+    box-shadow:var(--sh),0 0 0 1px rgba(255,255,255,0.03);
+    transition:transform 0.5s ease,box-shadow 0.5s ease;
+}
+.mock-app:hover{
+    transform:perspective(800px) rotateY(-2deg) rotateX(1deg) scale(1.01);
+    box-shadow:var(--sh),0 0 80px rgba(124,106,247,0.1);
+}
+.mock-nav{
+    background:var(--bg3);border-bottom:1px solid var(--border);
+    padding:0.75rem 1.5rem;
+    display:flex;align-items:center;gap:0.5rem;
+}
+.mock-dot{width:11px;height:11px;border-radius:50%;}
+.mock-dot:nth-child(1){background:#ff5f57;}
+.mock-dot:nth-child(2){background:#febc2e;}
+.mock-dot:nth-child(3){background:#28c840;}
+.mock-title{font-size:0.78rem;color:var(--muted);margin-left:0.75rem;}
+.mock-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);
+    gap:1rem;padding:1.25rem;
+}
+.mock-book{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--rs);padding:1rem;
+    text-align:left;transition:all 0.3s ease;
+    animation:card-enter 0.4s ease both;
+}
+.mock-book:nth-child(2){animation-delay:0.1s;}
+.mock-book:nth-child(3){animation-delay:0.2s;}
+.mock-book:hover{border-color:var(--border-h);transform:translateY(-3px);}
+.mock-book-title{font-size:0.8rem;font-weight:700;margin-bottom:0.25rem;}
+.mock-book-author{font-size:0.7rem;color:var(--muted);margin-bottom:0.6rem;}
+.mock-badge{
+    display:inline-block;padding:0.15rem 0.55rem;
+    border-radius:999px;font-size:0.65rem;font-weight:700;
+}
+.mb-r{background:rgba(251,191,36,0.15);color:var(--yellow);}
+.mb-f{background:rgba(52,211,153,0.15);color:var(--green);}
+.mb-w{background:rgba(96,165,250,0.15);color:var(--blue);}
+.mock-stars{font-size:0.7rem;color:var(--yellow);margin-top:0.4rem;}
+
+/* STATS BAR */
+.stats-bar{
+    background:var(--bg2);border-top:1px solid var(--border);
+    border-bottom:1px solid var(--border);
+    padding:3rem 2rem;
+}
+.stats-inner{
+    max-width:900px;margin:0 auto;
+    display:grid;grid-template-columns:repeat(4,1fr);gap:2rem;
+    text-align:center;
+}
+.stat-big{font-size:2.8rem;font-weight:900;line-height:1;}
+.stat-big-label{font-size:0.78rem;color:var(--muted);margin-top:0.3rem;font-weight:600;letter-spacing:0.05em;}
+.stat-bar-num{
+    background:linear-gradient(135deg,#7c6af7,#c4b5fd);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    background-clip:text;
+}
+
+/* FOOTER */
+.landing-footer{
+    text-align:center;padding:2rem;
+    border-top:1px solid var(--border);
+    color:var(--dim);font-size:0.82rem;
+}
+
+/* ==================== AUTH PAGE ==================== */
+#authPage{display:none;min-height:100vh;align-items:center;justify-content:center;padding:2rem;}
+#authPage.active{display:flex;}
+
+.auth-card{
+    background:rgba(13,16,33,0.8);
+    border:1px solid var(--border);
+    border-radius:24px;padding:2.5rem;
+    width:100%;max-width:440px;
+    box-shadow:var(--sh),0 0 80px rgba(124,106,247,0.07);
+    backdrop-filter:blur(24px);
+    animation:scaleIn 0.4s cubic-bezier(.34,1.56,.64,1) both;
+    position:relative;overflow:hidden;
+}
+.auth-card::before{
+    content:'';position:absolute;
+    top:-50%;left:-50%;width:200%;height:200%;
+    background:conic-gradient(from 0deg,transparent,rgba(124,106,247,0.03),transparent,rgba(167,139,250,0.03),transparent);
+    animation:ring-spin 20s linear infinite;
+    pointer-events:none;
+}
+.auth-back{
+    display:inline-flex;align-items:center;gap:0.4rem;
+    color:var(--muted);font-size:0.82rem;font-weight:500;
+    cursor:pointer;margin-bottom:1.5rem;
+    transition:all var(--t);border-radius:6px;padding:0.2rem 0;
+}
+.auth-back:hover{color:var(--txt);}
+.auth-logo{text-align:center;margin-bottom:2rem;}
+.auth-logo .icon{
+    font-size:3rem;display:block;margin-bottom:0.6rem;
+    animation:float 5s ease-in-out infinite;
+}
+.auth-logo h2{
+    font-family:'Playfair Display',serif;
+    font-size:1.8rem;font-weight:800;
+    background:var(--vg2);background-size:200% auto;
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    background-clip:text;animation:text-gradient-shift 4s ease infinite;
+}
+.auth-logo p{color:var(--muted);font-size:0.875rem;margin-top:0.3rem;}
+
+.auth-tabs{
+    display:flex;background:rgba(0,0,0,0.3);
+    border-radius:var(--rs);padding:4px;margin-bottom:1.75rem;
+}
+.auth-tab{
+    flex:1;padding:0.6rem;text-align:center;
+    font-size:0.85rem;font-weight:600;
+    border-radius:7px;cursor:pointer;color:var(--muted);
+    transition:all var(--t);user-select:none;
+}
+.auth-tab.active{
+    background:var(--vg);color:#fff;
+    box-shadow:0 2px 15px var(--glow);
+}
+
+/* ==================== DASHBOARD ==================== */
+#dashPage{display:none;flex-direction:column;}
+#dashPage.active{display:flex;}
+
+.dash-content{
+    padding:2rem;max-width:1300px;
+    margin:0 auto;width:100%;
+}
+
+/* View switcher */
+.view-tabs-wrap{margin-bottom:1.75rem;}
+.view-tabs{
+    display:inline-flex;background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--rs);padding:4px;gap:0;
+}
+.view-tab{
+    padding:0.55rem 1.35rem;border-radius:7px;
+    font-size:0.875rem;font-weight:600;cursor:pointer;
+    color:var(--muted);transition:all var(--t);
+    display:flex;align-items:center;gap:0.4rem;user-select:none;
+}
+.view-tab.active{background:var(--vg);color:#fff;box-shadow:0 2px 15px var(--glow);}
+
+/* Stats row */
+.stats-row{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+    gap:1rem;margin-bottom:2rem;
+}
+.stat-card{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--r);padding:1.4rem 1.5rem;
+    text-align:center;transition:all 0.35s cubic-bezier(.4,0,.2,1);
+    position:relative;overflow:hidden;cursor:default;
+}
+.stat-card::before{
+    content:'';position:absolute;inset:0;
+    background:var(--vg);opacity:0;transition:opacity 0.3s;
+}
+.stat-card:hover{
+    border-color:rgba(124,106,247,0.4);
+    transform:translateY(-4px) scale(1.02);
+    box-shadow:0 12px 40px rgba(124,106,247,0.15);
+}
+.stat-card:hover::before{opacity:0.05;}
+.stat-number{
+    font-size:2.2rem;font-weight:900;line-height:1;
+    margin-bottom:0.3rem;
+    background:linear-gradient(135deg,#7c6af7,#a78bfa,#c4b5fd);
+    background-size:200% auto;
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    background-clip:text;
+    animation:text-gradient-shift 6s ease infinite;
+    transition:transform 0.3s;
+}
+.stat-card:hover .stat-number{transform:scale(1.1);}
+.stat-label{
+    font-size:0.7rem;color:var(--muted);
+    text-transform:uppercase;letter-spacing:0.08em;font-weight:700;
+}
+
+/* Toolbar */
+.toolbar{
+    display:flex;align-items:center;justify-content:space-between;
+    flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem;
+}
+.toolbar-left{display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;}
+.filter-btn{
+    padding:0.4rem 1.1rem;border-radius:999px;
+    border:1px solid var(--border);background:transparent;
+    color:var(--muted);font-family:'Inter',sans-serif;
+    font-size:0.8rem;font-weight:600;cursor:pointer;
+    transition:all 0.25s cubic-bezier(.4,0,.2,1);
+}
+.filter-btn:hover{background:rgba(124,106,247,0.1);border-color:rgba(124,106,247,0.3);color:var(--v3);}
+.filter-btn.active{
+    background:var(--vg);border-color:transparent;color:#fff;
+    box-shadow:0 3px 12px var(--glow);
+}
+
+.search-box{position:relative;}
+.search-box input{
+    padding:0.52rem 1rem 0.52rem 2.5rem;
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:999px;color:var(--txt);
+    font-family:'Inter',sans-serif;font-size:0.875rem;
+    outline:none;width:220px;
+    transition:all var(--t);
+}
+.search-box input:focus{
+    border-color:var(--v);
+    box-shadow:0 0 0 3px rgba(124,106,247,0.18);
+    width:280px;background:rgba(124,106,247,0.04);
+}
+.search-icon{
+    position:absolute;left:0.85rem;top:50%;
+    transform:translateY(-50%);color:var(--dim);
+    pointer-events:none;font-size:0.85rem;
+}
+
+/* Books Grid */
+.books-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(285px,1fr));
+    gap:1.25rem;
+}
+.book-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--r);padding:1.5rem;
+    display:flex;flex-direction:column;gap:0.75rem;
+    transition:all 0.3s cubic-bezier(.4,0,.2,1);
+    position:relative;overflow:hidden;
+    animation:card-enter 0.4s ease both;
+}
+.book-card::before{
+    content:'';position:absolute;
+    top:0;left:0;right:0;height:2px;
+    background:var(--vg);
+    transform:scaleX(0);transform-origin:left;
+    transition:transform 0.35s cubic-bezier(.4,0,.2,1);
+}
+.book-card:hover{
+    border-color:var(--border-h);
+    box-shadow:0 16px 50px rgba(0,0,0,0.4),0 0 30px rgba(124,106,247,0.08);
+    transform:translateY(-5px);
+}
+.book-card:hover::before{transform:scaleX(1);}
+
+.book-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem;}
+.book-title{font-size:1rem;font-weight:700;line-height:1.35;flex:1;}
+.book-author{font-size:0.82rem;color:var(--muted);}
+.book-owner-name{
+    font-size:0.72rem;color:var(--v3);font-weight:600;
+    display:flex;align-items:center;gap:0.3rem;margin-top:0.2rem;
+}
+
+.book-badges{display:flex;gap:0.45rem;flex-wrap:wrap;}
+.badge{
+    display:inline-flex;align-items:center;gap:0.3rem;
+    padding:0.22rem 0.7rem;border-radius:999px;
+    font-size:0.72rem;font-weight:700;
+    transition:all var(--t);
+}
+.badge-genre{background:rgba(124,106,247,0.12);color:var(--v3);border:1px solid rgba(124,106,247,0.2);}
+.badge-want{background:rgba(96,165,250,0.1);color:var(--blue);border:1px solid rgba(96,165,250,0.2);}
+.badge-reading{background:rgba(251,191,36,0.1);color:var(--yellow);border:1px solid rgba(251,191,36,0.2);}
+.badge-done{background:rgba(52,211,153,0.1);color:var(--green);border:1px solid rgba(52,211,153,0.2);}
+
+.book-notes{
+    font-size:0.8rem;color:var(--muted);
+    line-height:1.55;padding-top:0.5rem;
+    border-top:1px solid var(--border);
+}
+.book-rating{display:flex;gap:2px;}
+.star{font-size:0.85rem;color:var(--dim);}
+.star.filled{color:var(--yellow);}
+.book-actions{display:flex;gap:0.5rem;margin-top:auto;}
+
+/* Empty state */
+.empty-state{
+    grid-column:1 / -1;text-align:center;
+    padding:5rem 2rem;color:var(--muted);
+    animation:fadeUp 0.4s ease;
+}
+.empty-icon{
+    font-size:4rem;margin-bottom:1rem;display:block;
+    animation:float 5s ease-in-out infinite;
+}
+.empty-state p{margin-bottom:1.5rem;font-size:1rem;}
+
+/* ==================== COMMUNITY VIEW ==================== */
+.community-header{
+    background:linear-gradient(135deg,rgba(249,115,22,0.07),rgba(245,158,11,0.07));
+    border:1px solid rgba(249,115,22,0.18);
+    border-radius:var(--r);padding:1.5rem;
+    margin-bottom:1.5rem;
+    display:flex;align-items:center;gap:1rem;flex-wrap:wrap;
+    animation:slide-in-left 0.4s ease;
+}
+.ch-icon{font-size:2.2rem;animation:float 6s ease-in-out infinite;}
+.community-header h3{font-size:1rem;font-weight:700;color:var(--orange);}
+.community-header p{font-size:0.82rem;color:var(--muted);margin-top:0.15rem;}
+
+.users-table{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--r);overflow:hidden;margin-bottom:1.5rem;
+    animation:fadeUp 0.4s ease;
+}
+.users-table-head{
+    display:grid;
+    grid-template-columns:1fr 80px 80px 80px 80px;
+    padding:0.8rem 1.25rem;background:var(--bg3);
+    font-size:0.7rem;font-weight:700;color:var(--muted);
+    text-transform:uppercase;letter-spacing:0.08em;
+}
+.users-table-row{
+    display:grid;
+    grid-template-columns:1fr 80px 80px 80px 80px;
+    padding:0.9rem 1.25rem;border-top:1px solid var(--border);
+    font-size:0.875rem;align-items:center;
+    transition:all var(--t);
+    animation:fadeIn 0.3s ease both;
+}
+.users-table-row:hover{background:var(--surface-h);}
+.user-row-name{display:flex;align-items:center;gap:0.7rem;font-weight:600;}
+.user-avatar{
+    width:32px;height:32px;border-radius:50%;
+    background:var(--vg);display:flex;align-items:center;
+    justify-content:center;font-size:0.82rem;font-weight:700;
+    color:#fff;flex-shrink:0;
+    box-shadow:0 0 0 2px rgba(124,106,247,0.3);
+    transition:transform var(--t);
+}
+.users-table-row:hover .user-avatar{transform:scale(1.1);}
+.user-row-num{font-weight:700;text-align:center;}
+
+/* ==================== MODAL ==================== */
+.modal-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,0.75);
+    backdrop-filter:blur(8px);z-index:500;
+    display:flex;align-items:center;justify-content:center;padding:1rem;
+    opacity:0;pointer-events:none;transition:opacity 0.25s;
+}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{
+    background:var(--bg2);border:1px solid var(--border-h);
+    border-radius:22px;padding:2rem;width:100%;max-width:500px;
+    box-shadow:var(--sh);max-height:90vh;overflow-y:auto;
+    transform:translateY(30px) scale(0.95);
+    transition:transform 0.3s cubic-bezier(.34,1.56,.64,1);
+    position:relative;overflow:hidden;
+}
+.modal-overlay.open .modal{transform:translateY(0) scale(1);}
+.modal-glow{
+    position:absolute;top:0;left:0;right:0;height:1px;
+    background:var(--vg);
+}
+.modal-header{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:1.5rem;margin-top:0.5rem;
+}
+.modal-title{font-size:1.2rem;font-weight:800;}
+.modal-close{
+    background:var(--surface);border:1px solid var(--border);
+    color:var(--muted);width:32px;height:32px;border-radius:8px;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;
+    font-size:1.1rem;transition:all var(--t);
+}
+.modal-close:hover{background:var(--surface-h);color:var(--txt);}
+.modal-actions{display:flex;gap:0.75rem;margin-top:1.5rem;}
+.modal-actions .btn{flex:1;}
+
+/* Star rating */
+.star-rating{display:flex;gap:0.35rem;margin-top:0.35rem;}
+.star-input{
+    font-size:1.6rem;cursor:pointer;color:var(--dim);
+    transition:color 0.15s,transform 0.2s cubic-bezier(.34,1.56,.64,1);
+}
+.star-input:hover,.star-input.active{color:var(--yellow);transform:scale(1.2);}
+
+/* ==================== TOAST ==================== */
+#toast{
+    position:fixed;bottom:2rem;right:2rem;
+    background:var(--bg2);border:1px solid var(--border-h);
+    border-radius:var(--r);padding:0.9rem 1.4rem;
+    font-size:0.875rem;font-weight:600;
+    box-shadow:var(--sh);z-index:1000;
+    transform:translateY(80px) scale(0.9);
+    opacity:0;transition:all 0.4s cubic-bezier(.34,1.56,.64,1);
+    pointer-events:none;max-width:320px;
+    display:flex;align-items:center;gap:0.6rem;
+}
+#toast.show{transform:translateY(0) scale(1);opacity:1;}
+#toast.success{border-color:rgba(52,211,153,0.4);color:var(--green);}
+#toast.error{border-color:rgba(248,113,113,0.4);color:var(--red);}
+.toast-icon{font-size:1.1rem;}
+
+/* Spinner */
+.spinner{
+    display:inline-block;width:16px;height:16px;
+    border:2px solid rgba(255,255,255,0.25);
+    border-top-color:#fff;border-radius:50%;
+    animation:spin 0.7s linear infinite;vertical-align:middle;
+}
+
+/* ==================== PAGE TRANSITION ==================== */
+.page-enter{animation:fadeUp 0.4s ease both;}
+
+/* ==================== RESPONSIVE ==================== */
+@media(max-width:768px){
+    .landing-nav{padding:1rem 1.25rem;}
+    .hero{padding:7rem 1.25rem 3rem;}
+    .features-section,.showcase-section{padding-left:1.25rem;padding-right:1.25rem;}
+    .stats-inner{grid-template-columns:repeat(2,1fr);}
+    .nav{padding:0.75rem 1rem;}
+    .dash-content{padding:1rem;}
+    .search-box input{width:150px;}
+    .search-box input:focus{width:190px;}
+    .mock-grid{grid-template-columns:1fr 1fr;}
+    .mock-book:last-child{display:none;}
+    .hero h1{font-size:2.8rem;}
+}
+    </style>
+</head>
+<body>
+
+<!-- Particle canvas -->
+<canvas id="bgCanvas"></canvas>
+
+<div id="app">
+
+<!-- ========== LANDING ========== -->
+<div id="landingPage" class="page">
+    <nav class="landing-nav">
+        <div class="nav-brand">
+            <span class="logo-icon">📚</span>
+            <em>BookShelf</em>
+        </div>
+        <div style="display:flex;gap:0.75rem;align-items:center">
+            <button class="btn btn-ghost btn-sm" onclick="goToAuth('login')">Sign In</button>
+            <button class="btn btn-shimmer btn-sm" onclick="goToAuth('register')">✨ Get Started</button>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-blob hero-blob-1"></div>
+        <div class="hero-blob hero-blob-2"></div>
+        <span class="hero-deco">📚</span>
+        <span class="hero-deco">📖</span>
+        <span class="hero-deco">✨</span>
+        <span class="hero-deco">🌟</span>
+        <span class="hero-deco">📝</span>
+
+        <div class="hero-eyebrow">
+            <span class="eyebrow-dot"></span>
+            Your Personal Reading Universe
+        </div>
+        <h1>Every Book<br>You've Ever <span class="gradient-text">Loved</span></h1>
+        <p>Track what you're reading, discover what's next, and build a beautiful personal library — always accessible, always yours.</p>
+        <div class="hero-cta">
+            <button class="btn btn-primary btn-lg" onclick="goToAuth('register')" style="gap:0.6rem">
+                <span>✨</span> Start Your Library
+            </button>
+            <button class="btn btn-ghost btn-lg" onclick="goToAuth('login')">
+                I already have an account →
+            </button>
+        </div>
+        <div class="scroll-cue">
+            <div class="scroll-mouse"><div class="scroll-wheel"></div></div>
+            <span>Scroll to explore</span>
+        </div>
+    </section>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+        <div class="stats-inner">
+            <div>
+                <div class="stat-big stat-bar-num">∞</div>
+                <div class="stat-big-label">Books Supported</div>
+            </div>
+            <div>
+                <div class="stat-big stat-bar-num">3</div>
+                <div class="stat-big-label">Reading Statuses</div>
+            </div>
+            <div>
+                <div class="stat-big stat-bar-num">⭐ 5</div>
+                <div class="stat-big-label">Star Ratings</div>
+            </div>
+            <div>
+                <div class="stat-big stat-bar-num">🔒</div>
+                <div class="stat-big-label">JWT Secured</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features -->
+    <section class="features-section">
+        <div class="section-label">Why BookShelf?</div>
+        <h2 class="section-title">Everything your library<br><span class="gradient-text">could ever need</span></h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <span class="feature-icon">📖</span>
+                <h3>Track Your Reading</h3>
+                <p>Log every book with its reading status — want to read, currently reading, or finished. Never lose track again.</p>
+                <span class="feature-tag">3 statuses</span>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">⭐</span>
+                <h3>Rate & Review</h3>
+                <p>Give star ratings and keep personal notes, quotes, and highlights for every book you read.</p>
+                <span class="feature-tag">5-star rating</span>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🔒</span>
+                <h3>Secure & Personal</h3>
+                <p>Your library is private by default. JWT-authenticated and completely scoped to you.</p>
+                <span class="feature-tag">JWT auth</span>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">👑</span>
+                <h3>Owner Dashboard</h3>
+                <p>First signup becomes the owner — view a live community library of all member books combined.</p>
+                <span class="feature-tag">Owner exclusive</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Showcase -->
+    <section class="showcase-section">
+        <div class="section-label">Interface Preview</div>
+        <h2 class="section-title" style="margin-bottom:1.5rem">A library that feels <span class="gradient-text">premium</span></h2>
+        <div class="mock-app">
+            <div class="mock-nav">
+                <div class="mock-dot"></div>
+                <div class="mock-dot"></div>
+                <div class="mock-dot"></div>
+                <span class="mock-title">📚 BookShelf — My Library</span>
+            </div>
+            <div class="mock-grid">
+                <div class="mock-book">
+                    <div class="mock-book-title">Dune</div>
+                    <div class="mock-book-author">Frank Herbert</div>
+                    <span class="mock-badge mb-f">✅ Finished</span>
+                    <div class="mock-stars">★★★★★</div>
+                </div>
+                <div class="mock-book">
+                    <div class="mock-book-title">The Name of the Wind</div>
+                    <div class="mock-book-author">Patrick Rothfuss</div>
+                    <span class="mock-badge mb-r">📖 Reading</span>
+                    <div class="mock-stars">★★★★☆</div>
+                </div>
+                <div class="mock-book">
+                    <div class="mock-book-title">Project Hail Mary</div>
+                    <div class="mock-book-author">Andy Weir</div>
+                    <span class="mock-badge mb-w">📋 Want to Read</span>
+                    <div class="mock-stars" style="color:var(--dim)">☆☆☆☆☆</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="landing-footer">
+        Built with ❤️ &nbsp;·&nbsp; BookShelf &copy; 2025 &nbsp;·&nbsp;
+        <a href="#" onclick="goToAuth('register')" style="color:var(--v2);text-decoration:none">Start reading →</a>
+    </footer>
+</div>
+
+<!-- ========== AUTH PAGE ========== -->
+<div id="authPage" class="page">
+    <div class="auth-card">
+        <div class="auth-back" onclick="showLanding()">← Back to home</div>
+        <div class="auth-logo">
+            <span class="icon">📚</span>
+            <h2>BookShelf</h2>
+            <p>Your personal reading tracker</p>
+        </div>
+        <div class="auth-tabs">
+            <div class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Sign In</div>
+            <div class="auth-tab" id="tabRegister" onclick="switchTab('register')">Create Account</div>
+        </div>
+        <div id="authError" class="error-msg"></div>
+        <!-- Login -->
+        <form id="loginForm">
+            <div class="field">
+                <label>Email</label>
+                <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email">
+            </div>
+            <div class="field">
+                <label>Password</label>
+                <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block" id="loginBtn" style="margin-top:0.5rem">Sign In</button>
+        </form>
+        <!-- Register -->
+        <form id="registerForm" style="display:none">
+            <div class="field">
+                <label>Full Name</label>
+                <input type="text" id="regName" placeholder="Your Name" required autocomplete="name">
+            </div>
+            <div class="field">
+                <label>Email</label>
+                <input type="email" id="regEmail" placeholder="you@example.com" required autocomplete="email">
+            </div>
+            <div class="field">
+                <label>Password <span style="color:var(--dim);font-weight:400;text-transform:none;font-size:0.75rem">(min 6 chars)</span></label>
+                <input type="password" id="regPassword" placeholder="••••••••" required autocomplete="new-password" minlength="6">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block" id="registerBtn" style="margin-top:0.5rem">Create Account</button>
+        </form>
+    </div>
+</div>
+
+<!-- ========== DASHBOARD ========== -->
+<div id="dashPage" class="page">
+    <nav class="nav">
+        <div class="nav-brand" onclick="showLanding()">
+            <span class="logo-icon">📚</span>
+            <em>BookShelf</em>
+        </div>
+        <div class="nav-right">
+            <div id="ownerBadge" class="owner-badge" style="display:none">👑 Owner</div>
+            <div class="nav-user">Hello, <strong id="navUserName"></strong></div>
+            <button class="btn btn-ghost btn-sm" onclick="logout()">Sign Out</button>
+        </div>
+    </nav>
+
+    <div class="dash-content page-enter">
+
+        <!-- View switcher (owner only) -->
+        <div class="view-tabs-wrap" id="viewTabsWrap" style="display:none">
+            <div class="view-tabs">
+                <div class="view-tab active" id="myLibTab" onclick="switchView('mine')">📚 My Library</div>
+                <div class="view-tab" id="communityTab" onclick="switchView('community')">🌐 Community</div>
+            </div>
+        </div>
+
+        <!-- MY LIBRARY -->
+        <div id="myLibView">
+            <div class="stats-row" id="statsRow">
+                <div class="stat-card" style="animation-delay:0s">
+                    <div class="stat-number" id="statTotal">0</div>
+                    <div class="stat-label">Total Books</div>
+                </div>
+                <div class="stat-card" style="animation-delay:0.07s">
+                    <div class="stat-number" id="statReading">0</div>
+                    <div class="stat-label">Reading</div>
+                </div>
+                <div class="stat-card" style="animation-delay:0.14s">
+                    <div class="stat-number" id="statFinished">0</div>
+                    <div class="stat-label">Finished</div>
+                </div>
+                <div class="stat-card" style="animation-delay:0.21s">
+                    <div class="stat-number" id="statWant">0</div>
+                    <div class="stat-label">Want to Read</div>
+                </div>
+            </div>
+
+            <div class="toolbar">
+                <div class="toolbar-left">
+                    <button class="filter-btn active" onclick="setFilter('All',this)">All</button>
+                    <button class="filter-btn" onclick="setFilter('Want to Read',this)">📋 Want</button>
+                    <button class="filter-btn" onclick="setFilter('Reading',this)">📖 Reading</button>
+                    <button class="filter-btn" onclick="setFilter('Finished',this)">✅ Finished</button>
+                </div>
+                <div style="display:flex;gap:0.75rem;align-items:center">
+                    <div class="search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="searchInput" placeholder="Search books…" oninput="renderBooks()">
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="openModal()">+ Add Book</button>
+                </div>
+            </div>
+
+            <div class="books-grid" id="booksGrid"></div>
+        </div>
+
+        <!-- COMMUNITY VIEW -->
+        <div id="communityView" style="display:none">
+            <div class="community-header">
+                <span class="ch-icon">🌐</span>
+                <div>
+                    <h3>Community Library</h3>
+                    <p>Read-only combined view of all members' books. Owner access only.</p>
+                </div>
+            </div>
+            <div class="users-table" id="usersTable">
+                <div class="users-table-head">
+                    <span>Member</span>
+                    <span style="text-align:center">Total</span>
+                    <span style="text-align:center">Reading</span>
+                    <span style="text-align:center">Done</span>
+                    <span style="text-align:center">Want</span>
+                </div>
+                <div id="usersTableBody"></div>
+            </div>
+            <div class="toolbar">
+                <div class="toolbar-left">
+                    <button class="filter-btn active" onclick="setCommunityFilter('All',this)">All</button>
+                    <button class="filter-btn" onclick="setCommunityFilter('Want to Read',this)">📋 Want</button>
+                    <button class="filter-btn" onclick="setCommunityFilter('Reading',this)">📖 Reading</button>
+                    <button class="filter-btn" onclick="setCommunityFilter('Finished',this)">✅ Finished</button>
+                </div>
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="communitySearch" placeholder="Search community…" oninput="renderCommunityBooks()">
+                </div>
+            </div>
+            <div class="books-grid" id="communityGrid"></div>
+        </div>
+    </div>
+</div>
+
+</div><!-- #app -->
+
+<!-- MODAL -->
+<div class="modal-overlay" id="bookModal">
+    <div class="modal">
+        <div class="modal-glow"></div>
+        <div class="modal-header">
+            <div class="modal-title" id="modalTitle">Add a Book</div>
+            <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <div id="modalError" class="error-msg"></div>
+        <form id="bookForm">
+            <input type="hidden" id="editBookId">
+            <div class="field">
+                <label>Title *</label>
+                <input type="text" id="fTitle" placeholder="Book title" required>
+            </div>
+            <div class="field">
+                <label>Author *</label>
+                <input type="text" id="fAuthor" placeholder="Author name" required>
+            </div>
+            <div class="field">
+                <label>Genre *</label>
+                <input type="text" id="fGenre" placeholder="e.g. Sci-Fi, Fantasy, Non-Fiction">
+            </div>
+            <div class="field">
+                <label>Reading Status</label>
+                <select id="fStatus">
+                    <option value="Want to Read">📋 Want to Read</option>
+                    <option value="Reading">📖 Reading</option>
+                    <option value="Finished">✅ Finished</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Your Rating</label>
+                <div class="star-rating" id="starRating">
+                    <span class="star-input" data-val="1" onclick="setRating(1)">★</span>
+                    <span class="star-input" data-val="2" onclick="setRating(2)">★</span>
+                    <span class="star-input" data-val="3" onclick="setRating(3)">★</span>
+                    <span class="star-input" data-val="4" onclick="setRating(4)">★</span>
+                    <span class="star-input" data-val="5" onclick="setRating(5)">★</span>
+                </div>
+            </div>
+            <div class="field">
+                <label>Notes / Highlights</label>
+                <textarea id="fNotes" placeholder="Your thoughts, quotes, or highlights…"></textarea>
+            </div>
+        </form>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" id="saveBookBtn" onclick="saveBook()">Save Book</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ===================== PARTICLE BACKGROUND ===================== */
+(function() {
+    const canvas = document.getElementById('bgCanvas');
+    const ctx = canvas.getContext('2d');
+    let W, H, particles = [], mouse = { x: -9999, y: -9999 };
+
+    function resize() {
+        W = canvas.width = window.innerWidth;
+        H = canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+    window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+
+    const COLORS = ['rgba(124,106,247,', 'rgba(167,139,250,', 'rgba(196,181,253,', 'rgba(96,165,250,'];
+
+    class Particle {
+        constructor() { this.reset(true); }
+        reset(init) {
+            this.x = Math.random() * W;
+            this.y = init ? Math.random() * H : H + 10;
+            this.r = Math.random() * 1.8 + 0.4;
+            this.vx = (Math.random() - 0.5) * 0.35;
+            this.vy = -(Math.random() * 0.6 + 0.2);
+            this.alpha = Math.random() * 0.5 + 0.1;
+            this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+            this.life = 0;
+            this.maxLife = Math.random() * 300 + 200;
+        }
+        update() {
+            const dx = this.x - mouse.x, dy = this.y - mouse.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist < 120) {
+                const force = (120 - dist) / 120 * 0.6;
+                this.vx += dx / dist * force * 0.08;
+                this.vy += dy / dist * force * 0.08;
+            }
+            this.vx *= 0.98; this.vy *= 0.98;
+            this.x += this.vx; this.y += this.vy;
+            this.life++;
+            if (this.y < -10 || this.life > this.maxLife) this.reset(false);
+        }
+        draw() {
+            const a = this.life < 30
+                ? this.alpha * (this.life / 30)
+                : this.life > this.maxLife - 30
+                    ? this.alpha * ((this.maxLife - this.life) / 30)
+                    : this.alpha;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+            ctx.fillStyle = this.color + a + ')';
+            ctx.fill();
+        }
+    }
+
+    // Connections
+    function drawConnections() {
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i+1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const d = Math.sqrt(dx*dx + dy*dy);
+                if (d < 90) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = `rgba(124,106,247,${(1 - d/90) * 0.06})`;
+                    ctx.lineWidth = 0.6;
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.stroke();
+                }
+            }
+        }
+    }
+
+    const COUNT = Math.min(120, Math.floor(W * H / 8000));
+    for (let i = 0; i < COUNT; i++) particles.push(new Particle());
+
+    function loop() {
+        ctx.clearRect(0, 0, W, H);
+        drawConnections();
+        particles.forEach(p => { p.update(); p.draw(); });
+        requestAnimationFrame(loop);
+    }
+    loop();
+})();
+
+/* ===================== APP STATE ===================== */
+let token          = localStorage.getItem('bs_token') || null;
+let currentUser    = JSON.parse(localStorage.getItem('bs_user') || 'null');
+let isOwner        = false;
+let allBooks       = [];
+let communityBooks = [];
+let communityStats = [];
+let activeFilter   = 'All';
+let communityFilter= 'All';
+let selectedRating = null;
+let editingId      = null;
+let activeView     = 'mine';
+
+/* ===================== INIT ===================== */
+(function init() {
+    if (token && currentUser) { showDash(); bootstrap(); }
+    else showLanding();
+})();
+
+async function bootstrap() {
+    document.getElementById('navUserName').textContent = currentUser.name;
+    try {
+        const r = await api('/api/auth/role', 'GET');
+        isOwner = r.isOwner || false;
+        if (isOwner) {
+            document.getElementById('ownerBadge').style.display = 'inline-flex';
+            document.getElementById('viewTabsWrap').style.display = 'block';
+        }
+    } catch(e) {}
+    loadBooks();
+}
+
+/* ===================== PAGE NAV ===================== */
+function showLanding() {
+    setPage('landingPage');
+}
+function showAuth() { setPage('authPage'); }
+function showDash() { setPage('dashPage'); }
+function setPage(id) {
+    ['landingPage','authPage','dashPage'].forEach(p => {
+        const el = document.getElementById(p);
+        el.classList.remove('active');
+    });
+    document.getElementById(id).classList.add('active');
+}
+function goToAuth(tab) { switchTab(tab); showAuth(); }
+
+/* ===================== VIEW SWITCH ===================== */
+function switchView(v) {
+    activeView = v;
+    document.getElementById('myLibTab').classList.toggle('active', v==='mine');
+    document.getElementById('communityTab').classList.toggle('active', v==='community');
+    document.getElementById('myLibView').style.display    = v==='mine' ? 'block' : 'none';
+    document.getElementById('communityView').style.display= v==='community' ? 'block' : 'none';
+    if (v === 'community') loadCommunityData();
+}
+
+/* ===================== AUTH TABS ===================== */
+let currentTab = 'login';
+function switchTab(tab) {
+    currentTab = tab;
+    document.getElementById('loginForm').style.display    = tab==='login' ? 'block' : 'none';
+    document.getElementById('registerForm').style.display = tab==='register' ? 'block' : 'none';
+    document.getElementById('tabLogin').classList.toggle('active', tab==='login');
+    document.getElementById('tabRegister').classList.toggle('active', tab==='register');
+    clearAuthError();
+}
+function showAuthError(msg) {
+    const el = document.getElementById('authError');
+    el.textContent = msg; el.classList.add('show');
+}
+function clearAuthError() { document.getElementById('authError').classList.remove('show'); }
+
+/* ===================== LOGIN ===================== */
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault(); clearAuthError();
+    const btn = document.getElementById('loginBtn');
+    btn.innerHTML = '<span class="spinner"></span> Signing in…'; btn.disabled = true;
+    try {
+        const res = await api('/api/auth/login','POST',{
+            email: document.getElementById('loginEmail').value.trim(),
+            password: document.getElementById('loginPassword').value
+        }, false);
+        if (res.error) { showAuthError(res.error); return; }
+        storeAuth(res); showDash(); bootstrap();
+    } catch(e) { showAuthError('Connection error. Is the server running?'); }
+    finally { btn.textContent = 'Sign In'; btn.disabled = false; }
+});
+
+/* ===================== REGISTER ===================== */
+document.getElementById('registerForm').addEventListener('submit', async function(e) {
+    e.preventDefault(); clearAuthError();
+    const btn = document.getElementById('registerBtn');
+    btn.innerHTML = '<span class="spinner"></span> Creating account…'; btn.disabled = true;
+    try {
+        const res = await api('/api/auth/register','POST',{
+            name:     document.getElementById('regName').value.trim(),
+            email:    document.getElementById('regEmail').value.trim(),
+            password: document.getElementById('regPassword').value
+        }, false);
+        if (res.error) { showAuthError(res.error); return; }
+        storeAuth(res); showDash(); bootstrap();
+    } catch(e) { showAuthError('Connection error. Is the server running?'); }
+    finally { btn.textContent = 'Create Account'; btn.disabled = false; }
+});
+
+function storeAuth({ token: t, user }) {
+    token = t; currentUser = user;
+    localStorage.setItem('bs_token', t);
+    localStorage.setItem('bs_user', JSON.stringify(user));
+}
+
+function logout() {
+    token = null; currentUser = null; isOwner = false;
+    allBooks = []; communityBooks = []; communityStats = [];
+    localStorage.removeItem('bs_token'); localStorage.removeItem('bs_user');
+    document.getElementById('ownerBadge').style.display = 'none';
+    document.getElementById('viewTabsWrap').style.display = 'none';
+    switchView('mine');
+    showLanding();
+}
+
+/* ===================== BOOKS ===================== */
+async function loadBooks() {
+    try {
+        const data = await api('/api/books','GET');
+        if (data.error) { toast('Failed to load books','error'); return; }
+        allBooks = data;
+        renderBooks(); updateStats();
+    } catch(e) { toast('Could not connect to server','error'); }
+}
+
+function renderBooks() {
+    const grid   = document.getElementById('booksGrid');
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const filtered = allBooks.filter(b => {
+        const mf = activeFilter==='All' || b.status===activeFilter;
+        const ms = !search || [b.title,b.author,b.genre].some(s=>s.toLowerCase().includes(search));
+        return mf && ms;
+    });
+    if (!filtered.length) {
+        grid.innerHTML = `
+            <div class="empty-state">
+                <span class="empty-icon">📭</span>
+                <p>${search ? 'No books match your search.' : 'Your library is empty — add your first book!'}</p>
+                ${!search ? `<button class="btn btn-primary" style="width:auto" onclick="openModal()">+ Add Book</button>` : ''}
+            </div>`;
+        return;
+    }
+    grid.innerHTML = filtered.map((b,i) => bookCardHTML(b, true, i)).join('');
+}
+
+function updateStats() {
+    animateCount('statTotal',    allBooks.length);
+    animateCount('statReading',  allBooks.filter(b=>b.status==='Reading').length);
+    animateCount('statFinished', allBooks.filter(b=>b.status==='Finished').length);
+    animateCount('statWant',     allBooks.filter(b=>b.status==='Want to Read').length);
+}
+
+function animateCount(id, target) {
+    const el = document.getElementById(id);
+    const start = parseInt(el.textContent) || 0;
+    if (start === target) return;
+    const dur = 600, step = 16;
+    const diff = target - start;
+    let curr = start, elapsed = 0;
+    const t = setInterval(() => {
+        elapsed += step;
+        const progress = Math.min(elapsed / dur, 1);
+        const ease = 1 - Math.pow(1 - progress, 3);
+        curr = Math.round(start + diff * ease);
+        el.textContent = curr;
+        if (progress >= 1) clearInterval(t);
+    }, step);
+}
+
+function setFilter(f, btn) {
+    activeFilter = f;
+    document.querySelectorAll('#myLibView .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderBooks();
+}
+
+/* ===================== COMMUNITY ===================== */
+async function loadCommunityData() {
+    document.getElementById('communityGrid').innerHTML =
+        `<div class="empty-state"><span class="empty-icon" style="animation:pulse 1s ease-in-out infinite">⏳</span><p>Loading community library…</p></div>`;
+    try {
+        const [books, stats] = await Promise.all([
+            api('/api/books/community','GET'),
+            api('/api/books/community/stats','GET')
+        ]);
+        if (books.error || stats.error) { toast(books.error || stats.error,'error'); return; }
+        communityBooks = books; communityStats = stats;
+        renderCommunityUsers();
+        renderCommunityBooks();
+    } catch(e) { toast('Could not load community data','error'); }
+}
+
+function renderCommunityUsers() {
+    document.getElementById('usersTableBody').innerHTML = communityStats.map((u,i) => `
+        <div class="users-table-row" style="animation-delay:${i*0.05}s">
+            <div class="user-row-name">
+                <div class="user-avatar">${esc(u.name.charAt(0).toUpperCase())}</div>
+                <div>
+                    <div style="font-weight:700">${esc(u.name)}</div>
+                    <div style="font-size:0.7rem;color:var(--muted)">${esc(u.email)}</div>
+                </div>
+            </div>
+            <div class="user-row-num">${u.total}</div>
+            <div class="user-row-num" style="color:var(--yellow)">${u.reading}</div>
+            <div class="user-row-num" style="color:var(--green)">${u.finished}</div>
+            <div class="user-row-num" style="color:var(--blue)">${u.wantToRead}</div>
+        </div>`).join('');
+}
+
+function renderCommunityBooks() {
+    const grid   = document.getElementById('communityGrid');
+    const search = document.getElementById('communitySearch').value.toLowerCase();
+    const filtered = communityBooks.filter(b => {
+        const mf = communityFilter==='All' || b.status===communityFilter;
+        const ms = !search || [b.title,b.author,b.genre,b.ownerName||''].some(s=>s.toLowerCase().includes(search));
+        return mf && ms;
+    });
+    if (!filtered.length) {
+        grid.innerHTML = `<div class="empty-state"><span class="empty-icon">📭</span><p>${search ? 'No books match your search.' : 'No community books yet.'}</p></div>`;
+        return;
+    }
+    grid.innerHTML = filtered.map((b,i) => bookCardHTML(b, false, i)).join('');
+}
+
+function setCommunityFilter(f, btn) {
+    communityFilter = f;
+    document.querySelectorAll('#communityView .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderCommunityBooks();
+}
+
+/* ===================== CARD HTML ===================== */
+function bookCardHTML(book, editable, idx=0) {
+    const smap = {
+        'Want to Read': `<span class="badge badge-want">📋 Want</span>`,
+        'Reading':      `<span class="badge badge-reading">📖 Reading</span>`,
+        'Finished':     `<span class="badge badge-done">✅ Done</span>`
+    };
+    const stars = book.rating
+        ? Array.from({length:5},(_,i) => `<span class="star ${i<book.rating?'filled':''}">★</span>`).join('')
+        : '';
+    const ownerLine = !editable && book.ownerName
+        ? `<div class="book-owner-name">👤 ${esc(book.ownerName)}</div>` : '';
+    const actions = editable ? `
+        <div class="book-actions">
+            <button class="btn btn-ghost btn-sm" style="flex:1" onclick="openEditModal('${book.id}')">✏️ Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteBook('${book.id}')">🗑</button>
+        </div>` : '';
+    return `
+    <div class="book-card" style="animation-delay:${idx*0.05}s">
+        <div class="book-card-top">
+            <div style="flex:1">
+                <div class="book-title">${esc(book.title)}</div>
+                <div class="book-author">by ${esc(book.author)}</div>
+                ${ownerLine}
+            </div>
+        </div>
+        <div class="book-badges">
+            <span class="badge badge-genre">${esc(book.genre)}</span>
+            ${smap[book.status]||''}
+        </div>
+        ${stars ? `<div class="book-rating">${stars}</div>` : ''}
+        ${book.notes ? `<div class="book-notes">${esc(book.notes)}</div>` : ''}
+        ${actions}
+    </div>`;
+}
+
+/* ===================== MODAL ===================== */
+function openModal() {
+    editingId = null; selectedRating = null;
+    document.getElementById('modalTitle').textContent = 'Add a Book';
+    document.getElementById('bookForm').reset();
+    document.getElementById('editBookId').value = '';
+    clearRatingUI(); clearModalError();
+    document.getElementById('bookModal').classList.add('open');
+    setTimeout(() => document.getElementById('fTitle').focus(), 250);
+}
+function openEditModal(id) {
+    const b = allBooks.find(x => x.id===id); if (!b) return;
+    editingId = id; selectedRating = b.rating;
+    document.getElementById('modalTitle').textContent = 'Edit Book';
+    document.getElementById('editBookId').value = id;
+    document.getElementById('fTitle').value  = b.title;
+    document.getElementById('fAuthor').value = b.author;
+    document.getElementById('fGenre').value  = b.genre;
+    document.getElementById('fStatus').value = b.status;
+    document.getElementById('fNotes').value  = b.notes || '';
+    setRating(b.rating); clearModalError();
+    document.getElementById('bookModal').classList.add('open');
+}
+function closeModal() { document.getElementById('bookModal').classList.remove('open'); }
+document.getElementById('bookModal').addEventListener('click', function(e) { if (e.target===this) closeModal(); });
+
+async function saveBook() {
+    const id     = document.getElementById('editBookId').value;
+    const title  = document.getElementById('fTitle').value.trim();
+    const author = document.getElementById('fAuthor').value.trim();
+    const genre  = document.getElementById('fGenre').value.trim();
+    const status = document.getElementById('fStatus').value;
+    const notes  = document.getElementById('fNotes').value.trim();
+    if (!title||!author||!genre) { showModalError('Title, author, and genre are required.'); return; }
+    const btn = document.getElementById('saveBookBtn');
+    btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
+    try {
+        const res = await api(id?`/api/books/${id}`:'/api/books', id?'PUT':'POST',
+            {title,author,genre,status,rating:selectedRating,notes});
+        if (res.error) { showModalError(res.error); return; }
+        if (id) { allBooks = allBooks.map(b=>b.id===id?res:b); toast('Book updated! ✨','success'); }
+        else    { allBooks.unshift(res); toast('Book added! 📚','success'); }
+        closeModal(); renderBooks(); updateStats();
+    } catch(e) { showModalError('Server error. Please try again.'); }
+    finally { btn.textContent='Save Book'; btn.disabled=false; }
+}
+
+async function deleteBook(id) {
+    if (!confirm('Remove this book from your library?')) return;
+    try {
+        const res = await api(`/api/books/${id}`,'DELETE');
+        if (res.error) { toast(res.error,'error'); return; }
+        allBooks = allBooks.filter(b=>b.id!==id);
+        renderBooks(); updateStats();
+        toast('Book removed.','success');
+    } catch(e) { toast('Failed to delete.','error'); }
+}
+
+function showModalError(msg) {
+    const el = document.getElementById('modalError');
+    el.textContent=msg; el.classList.add('show');
+}
+function clearModalError() { document.getElementById('modalError').classList.remove('show'); }
+
+/* ===================== STAR RATING ===================== */
+function setRating(val) {
+    if (!val) { selectedRating=null; clearRatingUI(); return; }
+    selectedRating = val;
+    document.querySelectorAll('#starRating .star-input').forEach((s,i) =>
+        s.classList.toggle('active', i<val));
+}
+function clearRatingUI() {
+    document.querySelectorAll('#starRating .star-input').forEach(s=>s.classList.remove('active'));
+}
+document.querySelectorAll('#starRating .star-input').forEach((star,i) => {
+    star.addEventListener('mouseenter', () => {
+        document.querySelectorAll('#starRating .star-input').forEach((s,j) =>
+            s.style.color = j<=i ? '#fbbf24' : '');
+    });
+    star.addEventListener('mouseleave', () => {
+        document.querySelectorAll('#starRating .star-input').forEach((s,j) => {
+            s.style.color = '';
+            s.classList.toggle('active', selectedRating && j<selectedRating);
+        });
+    });
+});
+
+/* ===================== API ===================== */
+async function api(url, method='GET', body=null, auth=true) {
+    const headers = {'Content-Type':'application/json'};
+    if (auth && token) headers['Authorization'] = `Bearer ${token}`;
+    const opts = {method, headers};
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(url, opts);
+    if ((res.status===401||res.status===403) && auth) { logout(); return {error:'Session expired.'}; }
+    return res.json();
+}
+
+function esc(s) {
+    return String(s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let toastTimer;
+function toast(msg, type='success') {
+    const el = document.getElementById('toast');
+    const icon = type==='success' ? '✓' : '✕';
+    el.innerHTML = `<span class="toast-icon">${icon}</span>${msg}`;
+    el.className = `show ${type}`;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.className='', 3200);
+}
+
+document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); });
+</script>
+</body>
+</html>
