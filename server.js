@@ -4,8 +4,11 @@ const cors     = require('cors');
 const path     = require('path');
 const mongoose = require('mongoose');
 
-const authRoutes  = require('./routes/auth');
-const booksRoutes = require('./routes/books');
+const authRoutes     = require('./routes/auth');
+const storiesRoutes  = require('./routes/stories');
+const chaptersRoutes = require('./routes/chapters');
+const commentsRoutes = require('./routes/comments');
+const usersRoutes    = require('./routes/users');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -22,7 +25,7 @@ mongoose
     .then(() => console.log('✅  Connected to MongoDB Atlas'))
     .catch(err => {
         console.error('❌  MongoDB connection error:', err.message);
-        process.exit(1);
+        console.warn('⚠️  Server is running in offline mode without database connection.');
     });
 
 // Optional: log mongoose queries in development
@@ -32,12 +35,15 @@ if (process.env.NODE_ENV === 'development') {
 
 /* ─────────── Middleware ─────────── */
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '5mb' })); // increased for chapter content
 app.use(express.static(path.join(__dirname, 'public')));
 
 /* ─────────── API Routes ─────────── */
-app.use('/api/auth',  authRoutes);
-app.use('/api/books', booksRoutes);
+app.use('/api/auth',     authRoutes);
+app.use('/api/stories',  storiesRoutes);
+app.use('/api/chapters', chaptersRoutes);
+app.use('/api/comments', commentsRoutes);
+app.use('/api/users',    usersRoutes);
 
 /* ─────────── Health Check ─────────── */
 app.get('/api/health', (req, res) => {
@@ -56,5 +62,5 @@ app.get('*', (req, res) => {
 
 /* ─────────── Start Server ─────────── */
 app.listen(PORT, () => {
-    console.log(`📚  BookShelf running at http://localhost:${PORT}`);
+    console.log(`✒️  InkWell running at http://localhost:${PORT}`);
 });

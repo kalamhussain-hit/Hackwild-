@@ -1,7 +1,7 @@
 {
-  "name": "my-book-library",
-  "version": "2.0.0",
-  "description": "Personal book library with JWT authentication and full CRUD",
+  "name": "inkwell",
+  "version": "1.0.0",
+  "description": "InkWell — A creative writing platform where authors publish stories and readers engage with comments, likes, and follows",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
