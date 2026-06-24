@@ -620,6 +620,133 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
   .dashboard-stats { grid-template-columns: 1fr 1fr; }
   .container { padding: 0 16px; }
 }
+
+/* ═══════════════ HABIT TRACKER ═══════════════ */
+.habits-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 32px;
+  align-items: start;
+}
+@media (max-width: 768px) {
+  .habits-layout {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+.habit-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+.habit-card:hover {
+  border-color: var(--border-hover);
+}
+.habit-composer h3, .habit-stats-card h3 {
+  font-size: 1.1rem;
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+}
+.habit-stat-highlight {
+  font-size: 2.8rem;
+  font-family: 'Playfair Display', serif;
+  font-weight: 800;
+  background: var(--gold-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+.habits-list-header h3 {
+  font-size: 1.2rem;
+  font-family: 'Playfair Display', serif;
+}
+.habits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+.habit-item-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  transition: var(--transition);
+  animation: fadeUp 0.3s ease both;
+}
+.habit-item-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-hover);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+.habit-item-card.completed {
+  background: rgba(45,212,191,0.02);
+  border-color: rgba(45,212,191,0.25);
+}
+.habit-item-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+.habit-checkbox {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 2px solid var(--text-dim);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  flex-shrink: 0;
+  color: transparent;
+  font-size: 0.75rem;
+}
+.habit-checkbox:hover {
+  border-color: var(--amber);
+}
+.habit-item-card.completed .habit-checkbox {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: #0a0b10;
+}
+.habit-name-text {
+  font-size: 0.92rem;
+  font-weight: 500;
+  transition: var(--transition);
+  word-break: break-word;
+  color: var(--text);
+}
+.habit-item-card.completed .habit-name-text {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+.habit-delete-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.habit-delete-btn:hover {
+  color: #ef4444;
+  background: rgba(239,68,68,0.1);
+}
 </style>
 </head>
 <body>
@@ -641,6 +768,7 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
       <span class="nav-link" data-page="browse" onclick="navigate('browse')">Browse</span>
       <span class="nav-link" data-page="dashboard" onclick="navigate('dashboard')">My Stories</span>
       <span class="nav-link" data-page="reading-list" onclick="navigate('reading-list')">Reading List</span>
+      <span class="nav-link" data-page="habits" onclick="navigate('habits')">Habits</span>
     </div>
     <div class="navbar-user">
       <div class="dropdown">
@@ -785,6 +913,57 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
     </section>
   </div>
 
+  <!-- ─── HABITS ─── -->
+  <div class="page" id="page-habits">
+    <section class="container" style="padding-top:100px;padding-bottom:60px;">
+      <div class="section-header">
+        <div>
+          <h2>⚡ Daily Habit Tracker</h2>
+          <p class="section-subtitle">Build consistency and master your day</p>
+        </div>
+      </div>
+      
+      <div class="habits-layout">
+        <!-- Input & Stats Sidebar -->
+        <div class="habits-sidebar">
+          <div class="habit-card habit-composer">
+            <h3>Add New Habit</h3>
+            <form id="addHabitForm" onsubmit="handleAddHabit(event)" style="margin-top:16px; display:flex; flex-direction:column; gap:12px;">
+              <div class="input-group">
+                <input type="text" id="newHabitName" placeholder="e.g. Code for 1 hour, Gym, Meditate..." required autocomplete="off">
+              </div>
+              <button class="btn btn-primary" type="submit">Create Habit</button>
+            </form>
+          </div>
+          
+          <div class="habit-card habit-stats-card" style="margin-top:20px;">
+            <h3>Consistency Overview</h3>
+            <div class="habit-progress-ring-container" style="margin-top:16px; text-align:center;">
+              <div class="habit-stat-highlight">
+                <span id="habitCompletedCount">0</span>/<span id="habitTotalCount">0</span>
+              </div>
+              <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px;">Habits completed today</p>
+              <div class="habit-progress-bar-bg" style="background:var(--bg3); border-radius:999px; height:8px; width:100%; overflow:hidden;">
+                <div id="habitProgressBar" style="background:var(--gold-gradient); height:100%; width:0%; transition: width 0.4s ease;"></div>
+              </div>
+              <p id="habitSuccessMessage" style="font-size:0.85rem; color:var(--teal); font-weight:600; margin-top:12px; min-height:20px;"></p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Habits List Main Area -->
+        <div class="habits-main">
+          <div class="habits-list-header">
+            <h3>Your Daily Habits</h3>
+          </div>
+          <div id="habitsListContainer" class="habits-grid" style="margin-top:16px;">
+            <div class="loading-center"><div class="spinner"></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
 </div>
 
 <script>
@@ -852,7 +1031,7 @@ function navigate(page, data) {
   closeDropdown();
 
   // Auth guard
-  const requiresAuth = ['dashboard', 'reading-list', 'editor'];
+  const requiresAuth = ['dashboard', 'reading-list', 'editor', 'habits'];
   if (!authToken && requiresAuth.includes(page.split('-')[0])) {
     toast('Authentication required / Database offline', 'error');
     return;
@@ -887,6 +1066,7 @@ function navigate(page, data) {
     case 'profile': loadProfile(data); break;
     case 'profile-me': loadProfile(currentUser?.id); break;
     case 'reading-list': loadReadingList(); break;
+    case 'habits': loadHabits(); break;
   }
 }
 
@@ -1770,6 +1950,124 @@ async function loadReadingList() {
     }
     $('readingListGrid').innerHTML = stories.map((s, i) => renderStoryCard(s, i)).join('');
   } catch (err) { toast(err.message, 'error'); }
+}
+
+/* ─── HABIT TRACKER ─── */
+let habitsState = [];
+
+async function loadHabits() {
+  if (!authToken) { toast('Database connection required', 'error'); return; }
+  $('habitsListContainer').innerHTML = '<div class="loading-center"><div class="spinner"></div></div>';
+  
+  try {
+    habitsState = await api('/api/habits');
+    renderHabits();
+  } catch (err) {
+    toast(err.message, 'error');
+    $('habitsListContainer').innerHTML = `<div class="empty-state"><h3>Failed to load habits</h3><p>${err.message}</p></div>`;
+  }
+}
+
+function renderHabits() {
+  const container = $('habitsListContainer');
+  if (habitsState.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state" style="grid-column: 1 / -1;">
+        <div class="empty-state-icon">⚡</div>
+        <h3>No habits set yet</h3>
+        <p>Start tracking your daily progress by adding a habit!</p>
+      </div>`;
+    updateHabitsStats();
+    return;
+  }
+
+  container.innerHTML = habitsState.map((habit, i) => {
+    return `
+      <div class="habit-item-card ${habit.completed ? 'completed' : ''}" style="animation-delay: ${i * 0.05}s">
+        <div class="habit-item-left" onclick="toggleHabit('${habit._id || habit.id}', ${!habit.completed})">
+          <div class="habit-checkbox">
+            ${habit.completed ? '✓' : ''}
+          </div>
+          <span class="habit-name-text">${habit.name}</span>
+        </div>
+        <button class="habit-delete-btn" onclick="deleteHabit('${habit._id || habit.id}')" title="Delete Habit">
+          🗑️
+        </button>
+      </div>
+    `;
+  }).join('');
+
+  updateHabitsStats();
+}
+
+async function handleAddHabit(e) {
+  e.preventDefault();
+  const input = $('newHabitName');
+  const name = input.value.trim();
+  if (!name) return;
+
+  try {
+    const newHabit = await api('/api/habits', {
+      method: 'POST',
+      body: JSON.stringify({ name })
+    });
+    habitsState.unshift(newHabit);
+    input.value = '';
+    renderHabits();
+    toast('Habit added successfully!');
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+async function toggleHabit(id, completed) {
+  try {
+    const updated = await api(`/api/habits/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ completed })
+    });
+    habitsState = habitsState.map(h => (h._id === id || h.id === id) ? updated : h);
+    renderHabits();
+    if (completed) {
+      toast('Habit completed! Keep it up! 🌟');
+    }
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+async function deleteHabit(id) {
+  if (!confirm('Are you sure you want to delete this habit?')) return;
+  try {
+    await api(`/api/habits/${id}`, { method: 'DELETE' });
+    habitsState = habitsState.filter(h => h._id !== id && h.id !== id);
+    renderHabits();
+    toast('Habit deleted.');
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+function updateHabitsStats() {
+  const total = habitsState.length;
+  const completed = habitsState.filter(h => h.completed).length;
+  
+  $('habitTotalCount').textContent = total;
+  $('habitCompletedCount').textContent = completed;
+  
+  const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+  $('habitProgressBar').style.width = percentage + '%';
+  
+  const msgEl = $('habitSuccessMessage');
+  if (total === 0) {
+    msgEl.textContent = '';
+  } else if (percentage === 100) {
+    msgEl.textContent = '🎉 Absolute consistency! 100% completed!';
+  } else if (percentage >= 50) {
+    msgEl.textContent = '💪 More than half way there! Keep going!';
+  } else {
+    msgEl.textContent = '⚡ Every small step counts. Keep building!';
+  }
 }
 
 /* ─── INIT ─── */

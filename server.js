@@ -9,6 +9,7 @@ const storiesRoutes  = require('./routes/stories');
 const chaptersRoutes = require('./routes/chapters');
 const commentsRoutes = require('./routes/comments');
 const usersRoutes    = require('./routes/users');
+const habitsRoutes   = require('./routes/habits');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -44,6 +45,7 @@ app.use('/api/stories',  storiesRoutes);
 app.use('/api/chapters', chaptersRoutes);
 app.use('/api/comments', commentsRoutes);
 app.use('/api/users',    usersRoutes);
+app.use('/api/habits',   habitsRoutes);
 
 /* ─────────── Health Check ─────────── */
 app.get('/api/health', (req, res) => {
