@@ -747,6 +747,56 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
   color: #ef4444;
   background: rgba(239,68,68,0.1);
 }
+
+/* ═══════════════ PASSWORD TOGGLE & GOOGLE SIGN-IN ═══════════════ */
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 4px;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+.password-toggle-btn:hover {
+  color: var(--text);
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 20px 0;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.auth-divider::before, .auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border);
+}
+.auth-divider:not(:empty)::before {
+  margin-right: .5em;
+}
+.auth-divider:not(:empty)::after {
+  margin-left: .5em;
+}
+
+.google-signin-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+  width: 100%;
+}
 </style>
 </head>
 <body>
@@ -785,6 +835,76 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
 
 <!-- ═══════════════ APP CONTAINER ═══════════════ -->
 <div id="app">
+
+  <!-- ─── LOGIN ─── -->
+  <div class="page" id="page-login">
+    <section class="auth-page">
+      <div class="auth-card">
+        <h2>Welcome Back</h2>
+        <p class="auth-subtitle">Sign in to your InkWell account</p>
+        <div class="auth-error" id="loginError"></div>
+        <form onsubmit="handleLogin(event)">
+          <div class="input-group">
+            <label for="loginEmail">Email Address</label>
+            <input type="email" id="loginEmail" required placeholder="name@example.com">
+          </div>
+          <div class="input-group" style="position:relative;">
+            <label for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" required placeholder="••••••••">
+            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('loginPassword', this)">👁️</button>
+          </div>
+          <button type="submit" class="btn btn-primary" id="loginBtn">Sign In</button>
+        </form>
+        
+        <!-- Google Sign In -->
+        <div class="auth-divider" id="googleDividerLogin" style="display:none;"><span>or sign in with</span></div>
+        <div class="google-signin-container" id="googleContainerLogin" style="display:none;">
+          <div id="googleBtnLogin"></div>
+        </div>
+
+        <div class="auth-footer">
+          Don't have an account? <a onclick="navigate('register')">Create one</a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ─── REGISTER ─── -->
+  <div class="page" id="page-register">
+    <section class="auth-page">
+      <div class="auth-card">
+        <h2>Create Account</h2>
+        <p class="auth-subtitle">Join the InkWell storytellers community</p>
+        <div class="auth-error" id="registerError"></div>
+        <form onsubmit="handleRegister(event)">
+          <div class="input-group">
+            <label for="regName">Display Name</label>
+            <input type="text" id="regName" required placeholder="Your Name">
+          </div>
+          <div class="input-group">
+            <label for="regEmail">Email Address</label>
+            <input type="email" id="regEmail" required placeholder="name@example.com">
+          </div>
+          <div class="input-group" style="position:relative;">
+            <label for="regPassword">Password</label>
+            <input type="password" id="regPassword" required placeholder="Min. 6 characters">
+            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('regPassword', this)">👁️</button>
+          </div>
+          <button type="submit" class="btn btn-primary" id="regBtn">Create Account</button>
+        </form>
+
+        <!-- Google Sign Up -->
+        <div class="auth-divider" id="googleDividerRegister" style="display:none;"><span>or sign up with</span></div>
+        <div class="google-signin-container" id="googleContainerRegister" style="display:none;">
+          <div id="googleBtnRegister"></div>
+        </div>
+
+        <div class="auth-footer">
+          Already have an account? <a onclick="navigate('login')">Sign in</a>
+        </div>
+      </div>
+    </section>
+  </div>
 
   <!-- ─── HOME ─── -->
   <div class="page" id="page-home">
@@ -952,7 +1072,7 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
         </div>
         
         <!-- Habits List Main Area -->
-        <div class="habits-main">
+          <div class="habits-main">
           <div class="habits-list-header">
             <h3>Your Daily Habits</h3>
           </div>
@@ -976,6 +1096,8 @@ let currentUser = null;
 let authToken = localStorage.getItem('inkwell_token');
 let currentPage = 'home';
 let browseState = { genre: 'All', search: '', page: 1, sort: 'recent' };
+let redirectPage = null;
+let redirectData = null;
 
 const GENRES = ['All','Fantasy','Romance','Science Fiction','Mystery','Thriller','Horror','Adventure','Historical Fiction','Poetry','Fan Fiction','Non-Fiction','Short Story','Drama','Comedy','Other'];
 
@@ -1030,10 +1152,13 @@ function navigate(page, data) {
   $('navLinks').classList.remove('open');
   closeDropdown();
 
-  // Auth guard
-  const requiresAuth = ['dashboard', 'reading-list', 'editor', 'habits'];
+  // Auth guard - block story and reader for guest users as well
+  const requiresAuth = ['dashboard', 'reading-list', 'editor', 'habits', 'story', 'reader'];
   if (!authToken && requiresAuth.includes(page.split('-')[0])) {
-    toast('Authentication required / Database offline', 'error');
+    toast('Please sign in to view this content', 'info');
+    redirectPage = page;
+    redirectData = data;
+    navigate('login');
     return;
   }
 
@@ -1106,8 +1231,18 @@ async function handleLogin(e) {
     localStorage.setItem('inkwell_token', authToken);
     currentUser = data.user;
     updateNavUser();
-    navigate('home');
+    
     toast('Welcome back, ' + currentUser.name + '!');
+    
+    if (redirectPage) {
+      const page = redirectPage;
+      const dataVal = redirectData;
+      redirectPage = null;
+      redirectData = null;
+      navigate(page, dataVal);
+    } else {
+      navigate('home');
+    }
   } catch (err) {
     $('loginError').textContent = err.message;
     $('loginError').style.display = 'block';
@@ -1135,8 +1270,18 @@ async function handleRegister(e) {
     localStorage.setItem('inkwell_token', authToken);
     currentUser = data.user;
     updateNavUser();
-    navigate('home');
+    
     toast('Welcome to InkWell, ' + currentUser.name + '! 🎉');
+    
+    if (redirectPage) {
+      const page = redirectPage;
+      const dataVal = redirectData;
+      redirectPage = null;
+      redirectData = null;
+      navigate(page, dataVal);
+    } else {
+      navigate('home');
+    }
   } catch (err) {
     $('registerError').textContent = err.message;
     $('registerError').style.display = 'block';
@@ -2070,17 +2215,88 @@ function updateHabitsStats() {
   }
 }
 
+function togglePasswordVisibility(inputId, btn) {
+  const input = $(inputId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁️';
+  }
+}
+
+async function handleGoogleSignInResponse(response) {
+  try {
+    const data = await api('/api/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ idToken: response.credential })
+    });
+    authToken = data.token;
+    localStorage.setItem('inkwell_token', authToken);
+    currentUser = data.user;
+    updateNavUser();
+    toast('Successfully signed in with Google! 🚀');
+    
+    if (redirectPage) {
+      const page = redirectPage;
+      const dataVal = redirectData;
+      redirectPage = null;
+      redirectData = null;
+      navigate(page, dataVal);
+    } else {
+      navigate('home');
+    }
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+function initializeGoogleSignIn(clientId) {
+  if (!clientId) return;
+  
+  // Show the divider and container elements since client ID is set
+  $('googleDividerLogin').style.display = 'flex';
+  $('googleContainerLogin').style.display = 'flex';
+  $('googleDividerRegister').style.display = 'flex';
+  $('googleContainerRegister').style.display = 'flex';
+
+  google.accounts.id.initialize({
+    client_id: clientId,
+    callback: handleGoogleSignInResponse
+  });
+
+  const renderBtn = (elementId) => {
+    const el = $(elementId);
+    if (el) {
+      google.accounts.id.renderButton(
+        el,
+        { theme: 'dark', size: 'large', width: 340, shape: 'pill' }
+      );
+    }
+  };
+
+  renderBtn('googleBtnLogin');
+  renderBtn('googleBtnRegister');
+}
+
 /* ─── INIT ─── */
 async function init() {
-  if (!authToken) {
-    try {
-      const data = await api('/api/auth/bypass');
-      authToken = data.token;
-      localStorage.setItem('inkwell_token', authToken);
-      currentUser = data.user;
-    } catch (err) {
-      console.warn('Bypass authentication failed:', err.message);
+  // Dynamically load Google Client ID and initialize Google Sign-in if present
+  try {
+    const data = await fetch(API + '/api/auth/google/client-id').then(r => r.json());
+    if (data.clientId) {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = () => {
+        initializeGoogleSignIn(data.clientId);
+      };
+      document.head.appendChild(script);
     }
+  } catch (err) {
+    console.warn('Could not initialize Google Sign-In SDK:', err.message);
   }
 
   if (authToken) {
@@ -2090,7 +2306,9 @@ async function init() {
       updateNavUser();
       navigate('home');
     } catch (err) {
-      console.warn('Could not fetch user details:', err.message);
+      console.warn('Session expired:', err.message);
+      authToken = null;
+      localStorage.removeItem('inkwell_token');
       navigate('home');
     }
   } else {

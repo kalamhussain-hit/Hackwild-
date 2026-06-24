@@ -171,4 +171,66 @@ router.put('/profile', authenticateToken, async (req, res) => {
     }
 });
 
+/* ─── GET /api/auth/google/client-id ─── */
+router.get('/google/client-id', (req, res) => {
+    res.json({ clientId: process.env.GOOGLE_CLIENT_ID || '' });
+});
+
+/* ─── POST /api/auth/google ─── */
+router.post('/google', async (req, res) => {
+    try {
+        const { idToken } = req.body;
+        if (!idToken) {
+            return res.status(400).json({ error: 'ID Token is required.' });
+        }
+
+        // Call Google's tokeninfo API to verify the token
+        const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
+        if (!response.ok) {
+            return res.status(401).json({ error: 'Invalid Google token.' });
+        }
+
+        const payload = await response.json();
+        
+        if (!payload.email) {
+            return res.status(400).json({ error: 'Email not returned by Google.' });
+        }
+
+        const email = payload.email.toLowerCase().trim();
+        const name = payload.name || email.split('@')[0];
+        const avatar = payload.picture || '';
+
+        // Find or create the user
+        let user = await User.findOne({ email });
+        if (!user) {
+            // Generate a secure random password for this OAuth user
+            const crypto = require('crypto');
+            const randomPassword = crypto.randomBytes(32).toString('hex');
+            
+            user = await User.create({
+                name,
+                email,
+                password: randomPassword,
+                avatar,
+                bio: 'Joined via Google Sign-In'
+            });
+        }
+
+        const token = issueToken(user);
+        res.json({
+            token,
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                bio: user.bio,
+                avatar: user.avatar,
+            },
+        });
+    } catch (err) {
+        console.error('Google login error:', err);
+        res.status(500).json({ error: 'Server error during Google login.' });
+    }
+});
+
 module.exports = router;
