@@ -39,7 +39,19 @@ app.use(cors());
 app.use(express.json({ limit: '5mb' })); // increased for chapter content
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Database connection check middleware
+app.use('/api', (req, res, next) => {
+    if (req.path === '/health') return next();
+    if (mongoose.connection.readyState !== 1) {
+        return res.status(503).json({
+            error: 'Database connection is not established. Please check your MONGO_URI environment variable on Vercel and ensure 0.0.0.0/0 is whitelisted in MongoDB Atlas Network Access.'
+        });
+    }
+    next();
+});
+
 /* ─────────── API Routes ─────────── */
+
 app.use('/api/auth',     authRoutes);
 app.use('/api/stories',  storiesRoutes);
 app.use('/api/chapters', chaptersRoutes);
