@@ -1882,7 +1882,8 @@ function loadEditor(data) {
       </div>
       <div class="editor-actions">
         <span class="word-count" id="wordCount">0 words</span>
-        <div style="display:flex;gap:10px">
+        <div style="display:flex;gap:10px;align-items:center">
+          <button class="btn btn-secondary btn-sm" onclick="openAIAssistModal()" style="display:flex;align-items:center;gap:6px;background:rgba(245,158,11,0.1);color:var(--amber);border:1px solid rgba(245,158,11,0.3)">✨ AI Assist</button>
           <button class="btn btn-secondary" onclick="saveChapter('${storyId}', false)">💾 Save as Draft</button>
           <button class="btn btn-primary" onclick="saveChapter('${storyId}', true)">📤 Publish Chapter</button>
         </div>
@@ -1908,7 +1909,8 @@ async function loadEditChapter(storyId, chapterId) {
       </div>
       <div class="editor-actions">
         <span class="word-count" id="wordCount">${ch.content.split(/\s+/).filter(Boolean).length} words</span>
-        <div style="display:flex;gap:10px">
+        <div style="display:flex;gap:10px;align-items:center">
+          <button class="btn btn-secondary btn-sm" onclick="openAIAssistModal()" style="display:flex;align-items:center;gap:6px;background:rgba(245,158,11,0.1);color:var(--amber);border:1px solid rgba(245,158,11,0.3)">✨ AI Assist</button>
           <button class="btn btn-secondary" onclick="updateChapter('${chapterId}', false)">💾 Save Draft</button>
           <button class="btn btn-primary" onclick="updateChapter('${chapterId}', true)">📤 Publish</button>
         </div>
@@ -1952,6 +1954,104 @@ async function updateChapter(chapterId, publish) {
     toast('Chapter updated!');
     navigate('dashboard');
   } catch (err) { toast(err.message, 'error'); }
+/* ─── AI ASSIST ─── */
+function openAIAssistModal() {
+  const content = $('chapterContent').value;
+  if (!content.trim()) {
+    toast('Please write some content first before using AI Assist!', 'warning');
+    return;
+  }
+
+  // Create modal overlay
+  const modal = document.createElement('div');
+  modal.id = 'aiModal';
+  modal.className = 'modal-backdrop';
+  modal.style = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:10000;animation:fadeIn 0.2s ease-out;';
+  
+  modal.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;width:90%;max-width:600px;padding:24px;box-shadow:0 20px 40px rgba(0,0,0,0.5);color:var(--text);display:flex;flex-direction:column;gap:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:4px;">
+        <h3 style="font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--amber);margin:0;">✨ InkWell AI Co-Author</h3>
+        <button onclick="closeAIModal()" style="background:none;border:none;color:var(--text-muted);font-size:1.4rem;cursor:pointer;line-height:1;">&times;</button>
+      </div>
+      
+      <div>
+        <label style="font-size:0.85rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:8px;">Choose a Quick Action:</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <button class="btn btn-secondary btn-sm" onclick="setAIInstruction('Polish writing, improve grammar, flow, and phrasing')" style="text-align:left;padding:10px;">✍️ Polish Prose</button>
+          <button class="btn btn-secondary btn-sm" onclick="setAIInstruction('Make the description more vivid, engaging, and atmospheric')" style="text-align:left;padding:10px;">🎨 Richer Details</button>
+          <button class="btn btn-secondary btn-sm" onclick="setAIInstruction('Increase tension, suspense, and dramatic pacing')" style="text-align:left;padding:10px;">🎭 Add Suspense</button>
+          <button class="btn btn-secondary btn-sm" onclick="setAIInstruction('Add creative dialogue options and make interactions dynamic')" style="text-align:left;padding:10px;">💬 Enhance Dialogue</button>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="aiInstruction" style="font-size:0.85rem;font-weight:600;color:var(--text-muted);">Or enter custom editing instruction:</label>
+        <input type="text" id="aiInstruction" placeholder="e.g. rewrite in a dark gothic tone, expand on the scenery..." style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:8px;font-size:0.9rem;" autocomplete="off">
+      </div>
+
+      <div id="aiPreviewArea" style="display:none;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;padding:16px;max-height:200px;overflow-y:auto;">
+        <h4 style="margin:0 0 8px 0;font-size:0.9rem;color:var(--amber);">AI Suggestion Preview:</h4>
+        <div id="aiPreviewText" style="font-size:0.95rem;line-height:1.6;white-space:pre-wrap;color:var(--text);"></div>
+      </div>
+
+      <div style="display:flex;justify-content:end;gap:12px;border-top:1px solid var(--border);padding-top:16px;margin-top:4px;">
+        <button class="btn btn-secondary" onclick="closeAIModal()">Cancel</button>
+        <button class="btn btn-primary" id="aiRunBtn" onclick="runAIAssist()" style="background:var(--amber);color:var(--bg);border-color:var(--amber)">⚡ Refine Draft</button>
+        <button class="btn btn-primary" id="aiApplyBtn" onclick="applyAISuggestion()" style="display:none;background:#10b981;color:#fff;border-color:#10b981">Refine and Replace</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+}
+
+function closeAIModal() {
+  const modal = $('aiModal');
+  if (modal) modal.remove();
+}
+
+function setAIInstruction(text) {
+  $('aiInstruction').value = text;
+}
+
+let lastAISuggestion = '';
+
+async function runAIAssist() {
+  const content = $('chapterContent').value;
+  const instruction = $('aiInstruction').value;
+  const runBtn = $('aiRunBtn');
+
+  runBtn.disabled = true;
+  runBtn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;margin-right:6px;vertical-align:middle;"></span>Refining...';
+
+  try {
+    const res = await api('/api/ai/refine', {
+      method: 'POST',
+      body: JSON.stringify({ content, instruction })
+    });
+
+    lastAISuggestion = res.refinedContent;
+    $('aiPreviewText').textContent = lastAISuggestion;
+    $('aiPreviewArea').style.display = 'block';
+    
+    runBtn.style.display = 'none';
+    $('aiApplyBtn').style.display = 'block';
+    toast('AI successfully refined your chapter draft!', 'success');
+  } catch (err) {
+    toast(err.message, 'error');
+    runBtn.disabled = false;
+    runBtn.textContent = '⚡ Refine Draft';
+  }
+}
+
+function applyAISuggestion() {
+  if (lastAISuggestion) {
+    $('chapterContent').value = lastAISuggestion;
+    updateWordCount();
+    closeAIModal();
+    toast('AI suggestion applied to your draft!', 'success');
+  }
 }
 
 /* ─── PROFILE ─── */

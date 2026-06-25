@@ -10,6 +10,7 @@ const chaptersRoutes = require('./routes/chapters');
 const commentsRoutes = require('./routes/comments');
 const usersRoutes    = require('./routes/users');
 const habitsRoutes   = require('./routes/habits');
+const aiRoutes       = require('./routes/ai');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -95,6 +96,7 @@ app.use('/api/chapters', chaptersRoutes);
 app.use('/api/comments', commentsRoutes);
 app.use('/api/users',    usersRoutes);
 app.use('/api/habits',   habitsRoutes);
+app.use('/api/ai',       aiRoutes);
 
 /* ─────────── Health Check ─────────── */
 app.get('/api/health', (req, res) => {
