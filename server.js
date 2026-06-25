@@ -40,8 +40,45 @@ app.use(express.json({ limit: '5mb' })); // increased for chapter content
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Database connection check middleware
-app.use('/api', (req, res, next) => {
+app.use('/api', async (req, res, next) => {
     if (req.path === '/health') return next();
+
+    // If completely disconnected, attempt to connect
+    if (mongoose.connection.readyState === 0) {
+        try {
+            await mongoose.connect(MONGO_URI);
+        } catch (err) {
+            return res.status(503).json({
+                error: `Database connection failed to initialize: ${err.message}. Please check your MONGO_URI environment variable.`
+            });
+        }
+    }
+
+    // If connecting, wait for connection to establish
+    if (mongoose.connection.readyState === 2) {
+        try {
+            await new Promise((resolve, reject) => {
+                const interval = setInterval(() => {
+                    if (mongoose.connection.readyState === 1) {
+                        clearInterval(interval);
+                        resolve();
+                    }
+                }, 50);
+                setTimeout(() => {
+                    clearInterval(interval);
+                    if (mongoose.connection.readyState !== 1) {
+                        reject(new Error('Connection timed out after 5 seconds'));
+                    }
+                }, 5000);
+            });
+        } catch (err) {
+            return res.status(503).json({
+                error: 'Database connection timed out during initialization. Please check your MONGO_URI on Vercel and ensure 0.0.0.0/0 is whitelisted in MongoDB Atlas Network Access.'
+            });
+        }
+    }
+
+    // Final check
     if (mongoose.connection.readyState !== 1) {
         return res.status(503).json({
             error: 'Database connection is not established. Please check your MONGO_URI environment variable on Vercel and ensure 0.0.0.0/0 is whitelisted in MongoDB Atlas Network Access.'
