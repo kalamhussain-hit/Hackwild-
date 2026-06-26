@@ -18,17 +18,16 @@ const PORT = process.env.PORT || 3000;
 /* ─────────── MongoDB Connection ─────────── */
 const MONGO_URI = process.env.MONGO_URI;
 if (!MONGO_URI) {
-    console.error('❌  MONGO_URI is not set in your .env file. Exiting.');
-    process.exit(1);
+    console.error('❌  MONGO_URI is not set in environment variables.');
+} else {
+    mongoose
+        .connect(MONGO_URI)
+        .then(() => console.log('✅  Connected to MongoDB Atlas'))
+        .catch(err => {
+            console.error('❌  MongoDB connection error:', err.message);
+            console.warn('⚠️  Server is running in offline mode without database connection.');
+        });
 }
-
-mongoose
-    .connect(MONGO_URI)
-    .then(() => console.log('✅  Connected to MongoDB Atlas'))
-    .catch(err => {
-        console.error('❌  MongoDB connection error:', err.message);
-        console.warn('⚠️  Server is running in offline mode without database connection.');
-    });
 
 // Optional: log mongoose queries in development
 if (process.env.NODE_ENV === 'development') {
@@ -46,6 +45,11 @@ app.use('/api', async (req, res, next) => {
 
     // If completely disconnected, attempt to connect
     if (mongoose.connection.readyState === 0) {
+        if (!MONGO_URI) {
+            return res.status(503).json({
+                error: 'Database connection failed: MONGO_URI environment variable is not configured. Please set MONGO_URI in your Vercel Project settings.'
+            });
+        }
         try {
             await mongoose.connect(MONGO_URI);
         } catch (err) {
