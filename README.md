@@ -67,10 +67,38 @@ Open **http://localhost:3000** in your browser.
 |--------|-------|------|-------------|
 | POST | `/api/ai/refine` | `{ content, instruction }` | Get AI mood reflection/analysis |
 
+## Public Deployment & Live Demo
+
+- **Production URL:** [https://environment-azure-six.vercel.app](https://environment-azure-six.vercel.app)
+
+### Runnable Demo (AI Mood Analysis)
+You can test the AI Mood Analysis API directly using your terminal (`curl`). Follow these steps:
+
+1. Register or Log in through the web app at [https://environment-azure-six.vercel.app](https://environment-azure-six.vercel.app) to obtain a JWT Token (copy it from your browser's Local Storage key `inkwell_token`).
+2. Run either of these commands in your terminal (replacing `YOUR_JWT_TOKEN` with your token):
+
+**Standard Entry Analysis:**
+```bash
+curl -X POST https://environment-azure-six.vercel.app/api/ai/refine \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{"content": "Today was a very stressful day. I felt overwhelmed with work, but talking to my friend helped me calm down."}'
+```
+
+**Safety/Crisis Interception (Guardrail Trigger):**
+```bash
+curl -X POST https://environment-azure-six.vercel.app/api/ai/refine \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{"content": "I feel so hopeless and I want to end my life."}'
+```
+
+---
+
 ## Deploy
 
 ### Vercel
 ```bash
 npx vercel --prod
 ```
-Set `JWT_SECRET`, `MONGO_URI`, and `GROQ_API_KEY` as environment variables in the Vercel dashboard.
+Configure `JWT_SECRET`, `MONGO_URI`, and `GROQ_API_KEY` as Environment Variables in your Vercel Project Settings dashboard.
