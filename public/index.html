@@ -67,18 +67,51 @@ body {
   background: #0a0b10;
   pointer-events: none;
 }
+/* ═══════════════ THEME COLOR VARIABLES FOR AMBIENT BACKGROUND ═══════════════ */
+:root {
+  --blob1-color: var(--amber);
+  --blob2-color: var(--violet);
+  --blob3-color: var(--rose);
+}
+body.theme-home {
+  --blob1-color: var(--amber);
+  --blob2-color: var(--violet);
+  --blob3-color: var(--rose);
+}
+body.theme-browse {
+  --blob1-color: var(--violet);
+  --blob2-color: var(--rose);
+  --blob3-color: var(--teal);
+}
+body.theme-dashboard {
+  --blob1-color: var(--teal);
+  --blob2-color: var(--sky);
+  --blob3-color: var(--violet);
+}
+body.theme-habits {
+  --blob1-color: #f97316;
+  --blob2-color: var(--amber);
+  --blob3-color: #ef4444;
+}
+body.theme-reading-list {
+  --blob1-color: var(--teal);
+  --blob2-color: #10b981;
+  --blob3-color: var(--sky);
+}
+
 .ambient-blob {
   position: absolute;
   border-radius: 50%;
   filter: blur(120px);
-  opacity: 0.12;
+  opacity: 0.11;
   mix-blend-mode: screen;
   pointer-events: none;
+  transition: background-color 1.5s ease-in-out; /* Smooth transition when switching pages */
 }
 .ambient-blob-1 {
   width: 50vw;
   height: 50vw;
-  background: radial-gradient(circle, var(--amber) 0%, transparent 70%);
+  background-color: var(--blob1-color);
   top: -10vw;
   left: -10vw;
   animation: float-blob-1 25s infinite alternate ease-in-out;
@@ -86,7 +119,7 @@ body {
 .ambient-blob-2 {
   width: 55vw;
   height: 55vw;
-  background: radial-gradient(circle, var(--violet) 0%, transparent 70%);
+  background-color: var(--blob2-color);
   bottom: -15vw;
   right: -10vw;
   animation: float-blob-2 30s infinite alternate ease-in-out;
@@ -94,7 +127,7 @@ body {
 .ambient-blob-3 {
   width: 45vw;
   height: 45vw;
-  background: radial-gradient(circle, var(--rose) 0%, transparent 70%);
+  background-color: var(--blob3-color);
   top: 35%;
   left: 45%;
   animation: float-blob-3 22s infinite alternate ease-in-out;
@@ -874,7 +907,7 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
 }
 </style>
 </head>
-<body>
+<body class="theme-home">
 <!-- ═══════════════ GLOBAL AMBIENT BACKGROUND ═══════════════ -->
 <div class="ambient-bg">
   <div class="ambient-blob ambient-blob-1"></div>
@@ -1232,6 +1265,7 @@ function navigate(page, data) {
   }
 
   currentPage = page;
+  document.body.className = 'theme-' + page; // Dynamic background theme change
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
 
   // Update nav active state
