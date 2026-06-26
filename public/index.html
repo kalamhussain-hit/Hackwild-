@@ -1064,9 +1064,9 @@ h1, h2, h3, h4, h5, h6, .navbar-brand, .habit-stat-highlight, .btn { font-family
   <div class="page" id="page-browse">
     <section class="container" style="padding-top:100px;padding-bottom:60px;">
       <div class="section-header">
-        <h2>Discover Stories</h2>
+        <h2>Discover Journals</h2>
         <div class="search-bar">
-          <input type="text" id="searchInput" placeholder="Search stories..." onkeyup="handleSearch(event)">
+          <input type="text" id="searchInput" placeholder="Search journals..." onkeyup="handleSearch(event)">
           <button class="btn btn-primary btn-sm" onclick="loadBrowse()">Search</button>
         </div>
       </div>
@@ -1201,7 +1201,7 @@ let browseState = { genre: 'All', search: '', page: 1, sort: 'recent' };
 let redirectPage = null;
 let redirectData = null;
 
-const GENRES = ['All','Reflective','Joyful','Anxious','Melancholy','Grateful','Stressed','Peaceful','Excited','Angry','Hopeful','Tired','Other'];
+const GENRES = ['All', 'Philosophy', 'Poetry', 'Fiction', 'Non-Fiction', 'Drama', 'Mystery', 'Fantasy', 'Science Fiction', 'History', 'Other'];
 
 /* ─── HELPERS ─── */
 function $(id) { return document.getElementById(id); }
@@ -1871,7 +1871,7 @@ function openCreateStoryModal() {
     <h2>Create New Journal</h2>
     <div class="input-group"><label>Title</label><input type="text" id="storyTitle" placeholder="Your journal title" maxlength="200"></div>
     <div class="input-group"><label>Description</label><textarea id="storyDesc" placeholder="What's your journal about?" maxlength="2000"></textarea></div>
-    <div class="input-group"><label>Mood Category</label>
+    <div class="input-group"><label>Genre</label>
       <select id="storyGenre">${GENRES.filter(g => g !== 'All').map(g => `<option value="${g}">${g}</option>`).join('')}</select>
     </div>
     <div class="input-group"><label>Tags (comma separated)</label><input type="text" id="storyTags" placeholder="reflection, gratitude, positivity"></div>
@@ -1922,7 +1922,7 @@ async function openEditStoryModal(storyId) {
       <h2>Edit Journal</h2>
       <div class="input-group"><label>Title</label><input type="text" id="editStoryTitle" value="${s.title}" maxlength="200"></div>
       <div class="input-group"><label>Description</label><textarea id="editStoryDesc" maxlength="2000">${s.description || ''}</textarea></div>
-      <div class="input-group"><label>Mood Category</label>
+      <div class="input-group"><label>Genre</label>
         <select id="editStoryGenre">${GENRES.filter(g => g !== 'All').map(g => `<option value="${g}" ${s.genre === g ? 'selected' : ''}>${g}</option>`).join('')}</select>
       </div>
       <div class="input-group"><label>Tags (comma separated)</label><input type="text" id="editStoryTags" value="${(s.tags || []).join(', ')}"></div>
