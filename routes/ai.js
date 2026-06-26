@@ -4,12 +4,15 @@ const authenticateToken = require('../middleware/auth');
 
 const router = express.Router();
 
-// Initialize Groq SDK
+// Initialize Groq SDK with an 8-second timeout guardrail
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 let groq = null;
 
 if (GROQ_API_KEY) {
-    groq = new Groq({ apiKey: GROQ_API_KEY });
+    groq = new Groq({ 
+        apiKey: GROQ_API_KEY,
+        timeout: 8000 // Timeout request after 8 seconds to prevent Vercel execution timeouts
+    });
 }
 
 /* ─── POST /api/ai/refine ─── */
@@ -17,10 +20,44 @@ router.post('/refine', authenticateToken, async (req, res) => {
     try {
         const { content, instruction } = req.body;
 
-        if (!content) {
+        // Guardrail 1: Input Validation
+        if (!content || typeof content !== 'string') {
             return res.status(400).json({ error: 'Content is required for AI mood analysis.' });
         }
 
+        const trimmedContent = content.trim();
+        if (trimmedContent.length < 10) {
+            return res.status(400).json({ error: 'Please write a journal entry of at least 10 characters for analysis.' });
+        }
+
+        // Restrict to max 20,000 characters to prevent token overflow/abuse
+        if (trimmedContent.length > 20000) {
+            return res.status(400).json({ error: 'Your journal entry is too long. Please limit it to 20,000 characters.' });
+        }
+
+        // Guardrail 2: Crisis Safety Interception
+        const crisisKeywords = [
+            'suicide', 'suicidal', 'kill myself', 'want to die', 'ending my life', 
+            'self-harm', 'cutting myself', 'end it all', 'better off dead', 'kill me'
+        ];
+        const lowerContent = trimmedContent.toLowerCase();
+        const containsCrisis = crisisKeywords.some(keyword => lowerContent.includes(keyword));
+
+        if (containsCrisis) {
+            return res.json({
+                refinedContent: `❤️ It sounds like you are going through an incredibly tough time. Please know that you are not alone, and there is support available. 
+
+If you are experiencing thoughts of self-harm or suicide, please reach out to one of these free, confidential crisis services immediately:
+• **In the US & Canada:** Call or text **988** to reach the Suicide & Crisis Lifeline.
+• **In the UK:** Call **111** (NHS services) or **116 123** (Samaritans).
+• **International:** Find a helpline in your country at [findahelpline.com](https://findahelpline.com/) or [befrienders.org](https://www.befrienders.org/).
+
+Please connect with a professional, a family member, or a friend who can support you.`,
+                safetyTriggered: true
+            });
+        }
+
+        // Guardrail 3: Configuration Validation
         if (!GROQ_API_KEY || !groq) {
             return res.status(503).json({ 
                 error: 'Groq AI Service is not configured. Please set the GROQ_API_KEY environment variable.' 
@@ -34,7 +71,7 @@ User's specific instruction/focus for this analysis: "${instruction || 'Providin
 
 ---
 Journal Entry Content:
-${content}
+${trimmedContent}
 ---
 
 Provide an empathetic response with emotional analysis, key sentiment themes, and reflection. Keep it concise, helpful, and supportive.`;
@@ -56,7 +93,22 @@ Provide an empathetic response with emotional analysis, key sentiment themes, an
         res.json({ refinedContent: refinedContent.trim() });
     } catch (err) {
         console.error('Groq AI error:', err);
-        res.status(500).json({ error: `AI mood analysis failed: ${err.message}` });
+        let userMessage = 'AI mood analysis failed.';
+        
+        // Guardrail 4: Detailed API Error Mapping
+        if (err.status === 429) {
+            userMessage = 'Groq AI Service is currently experiencing high traffic (rate limit reached). Please try again in a moment.';
+        } else if (err.status === 401 || err.status === 403) {
+            userMessage = 'The AI service credentials are invalid or expired. Please check environment variables.';
+        } else if (err.status === 400 && err.message.includes('context_length')) {
+            userMessage = 'The journal entry is too long for the AI model to analyze.';
+        } else if (err.name === 'APIConnectionTimeoutError' || err.message.includes('timeout')) {
+            userMessage = 'The request to the AI service timed out. Please try again.';
+        } else {
+            userMessage += ` Detail: ${err.message}`;
+        }
+
+        res.status(500).json({ error: userMessage });
     }
 });
 
