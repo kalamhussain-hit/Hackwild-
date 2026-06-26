@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mood Mirror — Reflect. Grow. Heal.</title>
-<meta name="description" content="Mood Mirror is an AI-powered daily journal, mood tracker, and habit tracker application.">
+<title>InkWell — Reflect. Grow. Heal.</title>
+<meta name="description" content="InkWell is an AI-powered daily journal, mood tracker, and habit tracker application.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,800;1,700&display=swap" rel="stylesheet">
 <style>
@@ -826,7 +826,7 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
 <!-- ═══════════════ NAVBAR ═══════════════ -->
 <nav class="navbar" id="navbar">
   <div class="navbar-inner">
-    <div class="navbar-brand" onclick="navigate('home')">Mood Mirror</div>
+    <div class="navbar-brand" onclick="navigate('home')">InkWell</div>
     <button class="nav-hamburger" onclick="toggleMobileNav()">☰</button>
     <div class="navbar-links" id="navLinks">
       <span class="nav-link" data-page="home" onclick="navigate('home')">Home</span>
@@ -883,7 +883,7 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
     <section class="auth-page">
       <div class="auth-card">
         <h2>Create Account</h2>
-        <p class="auth-subtitle">Join the Mood Mirror wellness community</p>
+        <p class="auth-subtitle">Join the InkWell wellness community</p>
         <div class="auth-error" id="registerError"></div>
         <form onsubmit="handleRegister(event)">
           <div class="input-group">
@@ -1987,7 +1987,7 @@ function openAIAssistModal() {
   modal.innerHTML = `
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;width:90%;max-width:600px;padding:24px;box-shadow:0 20px 40px rgba(0,0,0,0.5);color:var(--text);display:flex;flex-direction:column;gap:16px;">
       <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:4px;">
-        <h3 style="font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--amber);margin:0;">✨ Mood Mirror AI Assistant</h3>
+        <h3 style="font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--amber);margin:0;">✨ InkWell AI Assistant</h3>
         <button onclick="closeAIModal()" style="background:none;border:none;color:var(--text-muted);font-size:1.4rem;cursor:pointer;line-height:1;">&times;</button>
       </div>
       
