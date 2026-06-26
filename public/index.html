@@ -1954,6 +1954,8 @@ async function updateChapter(chapterId, publish) {
     toast('Chapter updated!');
     navigate('dashboard');
   } catch (err) { toast(err.message, 'error'); }
+}
+
 /* ─── AI ASSIST ─── */
 function openAIAssistModal() {
   const content = $('chapterContent').value;
