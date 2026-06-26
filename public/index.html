@@ -245,10 +245,25 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
 
 /* ═══════════════ GENRE CHIPS ═══════════════ */
 .genre-bar {
-  display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px;
-  scrollbar-width: none; -ms-overflow-style: none;
+  display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) rgba(255, 255, 255, 0.02);
 }
-.genre-bar::-webkit-scrollbar { display: none; }
+.genre-bar::-webkit-scrollbar {
+  height: 4px;
+}
+.genre-bar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+}
+.genre-bar::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+.genre-bar::-webkit-scrollbar-thumb:hover {
+  background: var(--amber);
+}
 .genre-chip {
   padding: 8px 18px; border-radius: 999px; font-size: 0.82rem; font-weight: 500;
   border: 1px solid var(--border); background: var(--surface);
