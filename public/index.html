@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>InkWell — Where Stories Come Alive</title>
-<meta name="description" content="InkWell is a creative writing platform where authors publish stories and readers engage with comments, likes, and follows.">
+<title>Mood Mirror — Reflect. Grow. Heal.</title>
+<meta name="description" content="Mood Mirror is an AI-powered daily journal, mood tracker, and habit tracker application.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,800;1,700&display=swap" rel="stylesheet">
 <style>
@@ -826,13 +826,13 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
 <!-- ═══════════════ NAVBAR ═══════════════ -->
 <nav class="navbar" id="navbar">
   <div class="navbar-inner">
-    <div class="navbar-brand" onclick="navigate('home')">InkWell</div>
+    <div class="navbar-brand" onclick="navigate('home')">Mood Mirror</div>
     <button class="nav-hamburger" onclick="toggleMobileNav()">☰</button>
     <div class="navbar-links" id="navLinks">
       <span class="nav-link" data-page="home" onclick="navigate('home')">Home</span>
-      <span class="nav-link" data-page="browse" onclick="navigate('browse')">Browse</span>
-      <span class="nav-link" data-page="dashboard" onclick="navigate('dashboard')">My Stories</span>
-      <span class="nav-link" data-page="reading-list" onclick="navigate('reading-list')">Reading List</span>
+      <span class="nav-link" data-page="browse" onclick="navigate('browse')">Browse Journals</span>
+      <span class="nav-link" data-page="dashboard" onclick="navigate('dashboard')">My Journals</span>
+      <span class="nav-link" data-page="reading-list" onclick="navigate('reading-list')">Bookmarks</span>
       <span class="nav-link" data-page="habits" onclick="navigate('habits')">Habits</span>
     </div>
     <div class="navbar-user">
@@ -883,7 +883,7 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
     <section class="auth-page">
       <div class="auth-card">
         <h2>Create Account</h2>
-        <p class="auth-subtitle">Join the InkWell storytellers community</p>
+        <p class="auth-subtitle">Join the Mood Mirror wellness community</p>
         <div class="auth-error" id="registerError"></div>
         <form onsubmit="handleRegister(event)">
           <div class="input-group">
@@ -911,7 +911,6 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
 
   <!-- ─── HOME ─── -->
   <div class="page" id="page-home">
-    <!-- Hero -->
     <section class="hero">
       <div class="hero-bg"></div>
       <div class="hero-floaters">
@@ -998,13 +997,13 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
     <section class="dashboard container">
       <div class="section-header">
         <div>
-          <h2>✍️ Author Dashboard</h2>
-          <p class="section-subtitle">Manage your stories and chapters</p>
+          <h2>✍️ Journal Dashboard</h2>
+          <p class="section-subtitle">Manage your journals and daily entries</p>
         </div>
-        <button class="btn btn-primary" onclick="openCreateStoryModal()">+ New Story</button>
+        <button class="btn btn-primary" onclick="openCreateStoryModal()">+ New Journal</button>
       </div>
       <div class="dashboard-stats" id="dashboardStats"></div>
-      <h3 style="margin-bottom:16px;">Your Stories</h3>
+      <h3 style="margin-bottom:16px;">Your Journals</h3>
       <div class="story-manage-list" id="myStoriesList">
         <div class="loading-center"><div class="spinner"></div></div>
       </div>
@@ -1102,7 +1101,7 @@ let browseState = { genre: 'All', search: '', page: 1, sort: 'recent' };
 let redirectPage = null;
 let redirectData = null;
 
-const GENRES = ['All','Fantasy','Romance','Science Fiction','Mystery','Thriller','Horror','Adventure','Historical Fiction','Poetry','Fan Fiction','Non-Fiction','Short Story','Drama','Comedy','Other'];
+const GENRES = ['All','Reflective','Joyful','Anxious','Melancholy','Grateful','Stressed','Peaceful','Excited','Angry','Hopeful','Tired','Other'];
 
 /* ─── HELPERS ─── */
 function $(id) { return document.getElementById(id); }
@@ -1465,7 +1464,7 @@ async function loadStoryDetail(storyId) {
           <div class="story-detail-stats">
             <span class="story-detail-stat">❤️ ${formatNum(story.likes ? story.likes.length : 0)} likes</span>
             <span class="story-detail-stat">👁 ${formatNum(story.views || 0)} views</span>
-            <span class="story-detail-stat">📄 ${story.chapterCount || 0} chapters</span>
+            <span class="story-detail-stat">📄 ${story.chapterCount || 0} entries</span>
             <span class="story-detail-stat">💬 ${commentCount || 0} comments</span>
           </div>
           ${story.tags && story.tags.length > 0 ? `
@@ -1481,7 +1480,7 @@ async function loadStoryDetail(storyId) {
                 <span class="like-count">${story.likes ? story.likes.length : 0}</span>
               </button>
               <button class="btn btn-secondary btn-sm" onclick="toggleReadingList('${story._id}', this)">
-                ${isInReadingList ? '✅ In Reading List' : '📚 Add to List'}
+                ${isInReadingList ? '✅ Bookmarked' : '📚 Bookmark'}
               </button>
             ` : ''}
             ${isOwner ? `<button class="btn btn-secondary btn-sm" onclick="openEditStoryModal('${story._id}')">✏️ Edit</button>` : ''}
@@ -1492,20 +1491,20 @@ async function loadStoryDetail(storyId) {
       <!-- Chapter List -->
       <div class="chapter-list">
         <div class="section-header">
-          <h2>Chapters</h2>
-          ${isOwner ? `<button class="btn btn-primary btn-sm" onclick="navigate('editor', {storyId:'${story._id}', mode:'new'})">+ Add Chapter</button>` : ''}
+          <h2>Journal Entries</h2>
+          ${isOwner ? `<button class="btn btn-primary btn-sm" onclick="navigate('editor', {storyId:'${story._id}', mode:'new'})">+ Add Entry</button>` : ''}
         </div>
         ${chapters.length > 0 ? chapters.map(ch => `
           <div class="chapter-list-item" onclick="navigate('reader','${ch._id}')">
-            <span class="chapter-list-num">Ch. ${ch.chapterNumber}</span>
+            <span class="chapter-list-num">Entry ${ch.chapterNumber}</span>
             <span class="chapter-list-title">${ch.title}</span>
             <span class="chapter-list-date">${timeAgo(ch.createdAt)}</span>
           </div>
         `).join('') : `
           <div class="empty-state">
             <div class="empty-state-icon">📝</div>
-            <h3>No chapters yet</h3>
-            <p>${isOwner ? 'Start writing your first chapter!' : 'The author hasn\'t published any chapters yet.'}</p>
+            <h3>No entries yet</h3>
+            <p>${isOwner ? 'Start writing your first entry!' : 'This journal has no entries yet.'}</p>
           </div>
         `}
       </div>
@@ -1707,8 +1706,8 @@ async function loadDashboard() {
     const totalChapters = stories.reduce((s, st) => s + (st.chapterCount || 0), 0);
 
     $('dashboardStats').innerHTML = `
-      <div class="stat-card"><div class="stat-card-label">Total Stories</div><div class="stat-card-value">${stories.length}</div></div>
-      <div class="stat-card"><div class="stat-card-label">Total Chapters</div><div class="stat-card-value">${totalChapters}</div></div>
+      <div class="stat-card"><div class="stat-card-label">Total Journals</div><div class="stat-card-value">${stories.length}</div></div>
+      <div class="stat-card"><div class="stat-card-label">Total Entries</div><div class="stat-card-value">${totalChapters}</div></div>
       <div class="stat-card"><div class="stat-card-label">Total Views</div><div class="stat-card-value">${formatNum(totalViews)}</div></div>
       <div class="stat-card"><div class="stat-card-label">Total Likes</div><div class="stat-card-value">${formatNum(totalLikes)}</div></div>
     `;
@@ -1717,9 +1716,9 @@ async function loadDashboard() {
       $('myStoriesList').innerHTML = `
         <div class="empty-state">
           <div class="empty-state-icon">✍️</div>
-          <h3>No stories yet</h3>
-          <p>Start writing your first story and share it with the world!</p>
-          <button class="btn btn-primary" onclick="openCreateStoryModal()">+ Create Your First Story</button>
+          <h3>No journals yet</h3>
+          <p>Start journaling and reflect on your feelings!</p>
+          <button class="btn btn-primary" onclick="openCreateStoryModal()">+ Create Your First Journal</button>
         </div>`;
       return;
     }
@@ -1733,14 +1732,14 @@ async function loadDashboard() {
             <div class="story-manage-meta">
               <span class="status-badge ${statusClass}">${s.status}</span>
               <span class="status-badge ${s.isPublished ? 'published' : 'draft'}">${s.isPublished ? 'Published' : 'Draft'}</span>
-              <span>📄 ${s.chapterCount || 0} chapters</span>
+              <span>📄 ${s.chapterCount || 0} entries</span>
               <span>👁 ${formatNum(s.views || 0)}</span>
               <span>❤️ ${s.likes ? s.likes.length : 0}</span>
             </div>
           </div>
           <div class="story-manage-actions">
             <button class="btn btn-secondary btn-sm" onclick="navigate('story','${s._id}')">👁 View</button>
-            <button class="btn btn-secondary btn-sm" onclick="navigate('editor', {storyId:'${s._id}', mode:'new'})">+ Chapter</button>
+            <button class="btn btn-secondary btn-sm" onclick="navigate('editor', {storyId:'${s._id}', mode:'new'})">+ Entry</button>
             <button class="btn btn-secondary btn-sm" onclick="openEditStoryModal('${s._id}')">✏️ Edit</button>
             <button class="btn btn-danger btn-sm" onclick="deleteStory('${s._id}')">🗑️</button>
           </div>
@@ -1768,24 +1767,24 @@ $('modalOverlay').addEventListener('click', (e) => {
 function openCreateStoryModal() {
   if (!authToken) { toast('Database connection required', 'error'); return; }
   openModal(`
-    <h2>Create New Story</h2>
-    <div class="input-group"><label>Title</label><input type="text" id="storyTitle" placeholder="Your story title" maxlength="200"></div>
-    <div class="input-group"><label>Description</label><textarea id="storyDesc" placeholder="What's your story about?" maxlength="2000"></textarea></div>
-    <div class="input-group"><label>Genre</label>
+    <h2>Create New Journal</h2>
+    <div class="input-group"><label>Title</label><input type="text" id="storyTitle" placeholder="Your journal title" maxlength="200"></div>
+    <div class="input-group"><label>Description</label><textarea id="storyDesc" placeholder="What's your journal about?" maxlength="2000"></textarea></div>
+    <div class="input-group"><label>Mood Category</label>
       <select id="storyGenre">${GENRES.filter(g => g !== 'All').map(g => `<option value="${g}">${g}</option>`).join('')}</select>
     </div>
-    <div class="input-group"><label>Tags (comma separated)</label><input type="text" id="storyTags" placeholder="romance, adventure, magic"></div>
+    <div class="input-group"><label>Tags (comma separated)</label><input type="text" id="storyTags" placeholder="reflection, gratitude, positivity"></div>
     <div class="input-group"><label>Cover Image URL (optional)</label><input type="text" id="storyCover" placeholder="https://..."></div>
     <div class="input-group"><label>Status</label>
       <select id="storyStatus"><option value="Ongoing">Ongoing</option><option value="Completed">Completed</option><option value="Hiatus">Hiatus</option></select>
     </div>
     <div class="input-group" style="flex-direction:row;align-items:center;gap:10px">
       <input type="checkbox" id="storyPublish" style="width:auto">
-      <label for="storyPublish" style="margin:0">Publish immediately</label>
+      <label for="storyPublish" style="margin:0">Make public (optional)</label>
     </div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="createStory()">Create Story</button>
+      <button class="btn btn-primary" onclick="createStory()">Create Journal</button>
     </div>
   `);
 }
@@ -1809,7 +1808,7 @@ async function createStory() {
       }),
     });
     closeModal();
-    toast('Story created! Now add some chapters.');
+    toast('Journal created! Now add some entries.');
     navigate('editor', { storyId: story._id, mode: 'new' });
   } catch (err) { toast(err.message, 'error'); }
 }
@@ -1819,10 +1818,10 @@ async function openEditStoryModal(storyId) {
     const data = await api(`/api/stories/${storyId}`);
     const s = data.story;
     openModal(`
-      <h2>Edit Story</h2>
+      <h2>Edit Journal</h2>
       <div class="input-group"><label>Title</label><input type="text" id="editStoryTitle" value="${s.title}" maxlength="200"></div>
       <div class="input-group"><label>Description</label><textarea id="editStoryDesc" maxlength="2000">${s.description || ''}</textarea></div>
-      <div class="input-group"><label>Genre</label>
+      <div class="input-group"><label>Mood Category</label>
         <select id="editStoryGenre">${GENRES.filter(g => g !== 'All').map(g => `<option value="${g}" ${s.genre === g ? 'selected' : ''}>${g}</option>`).join('')}</select>
       </div>
       <div class="input-group"><label>Tags (comma separated)</label><input type="text" id="editStoryTags" value="${(s.tags || []).join(', ')}"></div>
@@ -1836,7 +1835,7 @@ async function openEditStoryModal(storyId) {
       </div>
       <div class="input-group" style="flex-direction:row;align-items:center;gap:10px">
         <input type="checkbox" id="editStoryPublish" ${s.isPublished ? 'checked' : ''} style="width:auto">
-        <label for="editStoryPublish" style="margin:0">Published</label>
+        <label for="editStoryPublish" style="margin:0">Public</label>
       </div>
       <div class="modal-actions">
         <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
@@ -1861,17 +1860,17 @@ async function updateStory(storyId) {
       }),
     });
     closeModal();
-    toast('Story updated!');
+    toast('Journal updated!');
     if (currentPage === 'dashboard') loadDashboard();
     else navigate('story', storyId);
   } catch (err) { toast(err.message, 'error'); }
 }
 
 async function deleteStory(storyId) {
-  if (!confirm('Delete this story and all its chapters? This cannot be undone.')) return;
+  if (!confirm('Delete this journal and all its entries? This cannot be undone.')) return;
   try {
     await api(`/api/stories/${storyId}`, { method: 'DELETE' });
-    toast('Story deleted');
+    toast('Journal deleted');
     loadDashboard();
   } catch (err) { toast(err.message, 'error'); }
 }
@@ -1887,20 +1886,20 @@ function loadEditor(data) {
     loadEditChapter(storyId, chapterId);
   } else {
     $('editorSection').innerHTML = `
-      <h2>Write a New Chapter</h2>
-      <div class="input-group"><label>Chapter Title</label>
-        <input type="text" id="chapterTitle" placeholder="Chapter title..." maxlength="200">
+      <h2>Write a New Entry</h2>
+      <div class="input-group"><label>Entry Title</label>
+        <input type="text" id="chapterTitle" placeholder="Entry title..." maxlength="200">
       </div>
       <div style="margin-top:18px">
         <label style="font-size:0.82rem;font-weight:500;color:var(--text-muted);display:block;margin-bottom:6px">Content</label>
-        <textarea class="editor-textarea" id="chapterContent" placeholder="Start writing your chapter here..."></textarea>
+        <textarea class="editor-textarea" id="chapterContent" placeholder="Write down your feelings, thoughts, or reflections here..."></textarea>
       </div>
       <div class="editor-actions">
         <span class="word-count" id="wordCount">0 words</span>
         <div style="display:flex;gap:10px;align-items:center">
           <button class="btn btn-secondary btn-sm" onclick="openAIAssistModal()" style="display:flex;align-items:center;gap:6px;background:rgba(245,158,11,0.1);color:var(--amber);border:1px solid rgba(245,158,11,0.3)">✨ AI Assist</button>
           <button class="btn btn-secondary" onclick="saveChapter('${storyId}', false)">💾 Save as Draft</button>
-          <button class="btn btn-primary" onclick="saveChapter('${storyId}', true)">📤 Publish Chapter</button>
+          <button class="btn btn-primary" onclick="saveChapter('${storyId}', true)">📤 Publish Entry</button>
         </div>
       </div>
     `;
@@ -1914,8 +1913,8 @@ async function loadEditChapter(storyId, chapterId) {
     const data = await api(`/api/chapters/${chapterId}`);
     const ch = data.chapter;
     $('editorSection').innerHTML = `
-      <h2>Edit Chapter ${ch.chapterNumber}</h2>
-      <div class="input-group"><label>Chapter Title</label>
+      <h2>Edit Entry ${ch.chapterNumber}</h2>
+      <div class="input-group"><label>Entry Title</label>
         <input type="text" id="chapterTitle" value="${ch.title}" maxlength="200">
       </div>
       <div style="margin-top:18px">
@@ -1988,34 +1987,34 @@ function openAIAssistModal() {
   modal.innerHTML = `
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;width:90%;max-width:600px;padding:24px;box-shadow:0 20px 40px rgba(0,0,0,0.5);color:var(--text);display:flex;flex-direction:column;gap:16px;">
       <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:4px;">
-        <h3 style="font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--amber);margin:0;">✨ InkWell AI Co-Author</h3>
+        <h3 style="font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--amber);margin:0;">✨ Mood Mirror AI Assistant</h3>
         <button onclick="closeAIModal()" style="background:none;border:none;color:var(--text-muted);font-size:1.4rem;cursor:pointer;line-height:1;">&times;</button>
       </div>
       
       <div>
-        <label style="font-size:0.85rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:8px;">Choose a Quick Action:</label>
+        <label style="font-size:0.85rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:8px;">Choose an emotional reflection action:</label>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <button class="btn btn-secondary btn-sm" onclick="setAIInstruction('Polish writing, improve grammar, flow, and phrasing')" style="text-align:left;padding:10px;">✍️ Polish Prose</button>
-          <button class="btn btn-secondary btn-sm" onclick="setAIInstruction('Make the description more vivid, engaging, and atmospheric')" style="text-align:left;padding:10px;">🎨 Richer Details</button>
-          <button class="btn btn-secondary btn-sm" onclick="setAIInstruction('Increase tension, suspense, and dramatic pacing')" style="text-align:left;padding:10px;">🎭 Add Suspense</button>
-          <button class="btn btn-secondary btn-sm" onclick="setAIInstruction('Add creative dialogue options and make interactions dynamic')" style="text-align:left;padding:10px;">💬 Enhance Dialogue</button>
+          <button class="btn btn-secondary btn-sm" onclick="setAIInstruction('Analyze the underlying emotions and provide supportive reflection')" style="text-align:left;padding:10px;">🧘 Reflect & Analyze</button>
+          <button class="btn btn-secondary btn-sm" onclick="setAIInstruction('Help me reframe negative thoughts in this entry constructively')" style="text-align:left;padding:10px;">🌱 Cognitive Reframing</button>
+          <button class="btn btn-secondary btn-sm" onclick="setAIInstruction('Highlight key sentiment patterns and suggest reflection questions')" style="text-align:left;padding:10px;">✍️ Deepen Reflection</button>
+          <button class="btn btn-secondary btn-sm" onclick="setAIInstruction('Keep the emotional tone but polish the phrasing and readability')" style="text-align:left;padding:10px;">✨ Polished Expression</button>
         </div>
       </div>
 
       <div class="input-group">
-        <label for="aiInstruction" style="font-size:0.85rem;font-weight:600;color:var(--text-muted);">Or enter custom editing instruction:</label>
-        <input type="text" id="aiInstruction" placeholder="e.g. rewrite in a dark gothic tone, expand on the scenery..." style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:8px;font-size:0.9rem;" autocomplete="off">
+        <label for="aiInstruction" style="font-size:0.85rem;font-weight:600;color:var(--text-muted);">Or enter custom analysis instruction:</label>
+        <input type="text" id="aiInstruction" placeholder="e.g. highlight patterns of anxiety, offer positive reframing..." style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:8px;font-size:0.9rem;" autocomplete="off">
       </div>
 
       <div id="aiPreviewArea" style="display:none;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;padding:16px;max-height:200px;overflow-y:auto;">
-        <h4 style="margin:0 0 8px 0;font-size:0.9rem;color:var(--amber);">AI Suggestion Preview:</h4>
+        <h4 style="margin:0 0 8px 0;font-size:0.9rem;color:var(--amber);">AI Reflection & Analysis:</h4>
         <div id="aiPreviewText" style="font-size:0.95rem;line-height:1.6;white-space:pre-wrap;color:var(--text);"></div>
       </div>
 
       <div style="display:flex;justify-content:end;gap:12px;border-top:1px solid var(--border);padding-top:16px;margin-top:4px;">
         <button class="btn btn-secondary" onclick="closeAIModal()">Cancel</button>
-        <button class="btn btn-primary" id="aiRunBtn" onclick="runAIAssist()" style="background:var(--amber);color:var(--bg);border-color:var(--amber)">⚡ Refine Draft</button>
-        <button class="btn btn-primary" id="aiApplyBtn" onclick="applyAISuggestion()" style="display:none;background:#10b981;color:#fff;border-color:#10b981">Refine and Replace</button>
+        <button class="btn btn-primary" id="aiRunBtn" onclick="runAIAssist()" style="background:var(--amber);color:var(--bg);border-color:var(--amber)">⚡ Analyze Entry</button>
+        <button class="btn btn-primary" id="aiApplyBtn" onclick="applyAISuggestion()" style="display:none;background:#10b981;color:#fff;border-color:#10b981">Apply Analysis</button>
       </div>
     </div>
   `;
@@ -2089,7 +2088,7 @@ async function loadProfile(userId) {
           <h2 class="profile-name">${user.name}</h2>
           <p class="profile-bio">${user.bio || 'No bio yet.'}</p>
           <div class="profile-stats-row">
-            <span><span class="profile-stat-num">${stories.length}</span> stories</span>
+            <span><span class="profile-stat-num">${stories.length}</span> journals</span>
             <span><span class="profile-stat-num">${user.followerCount || 0}</span> followers</span>
             <span><span class="profile-stat-num">${user.followingCount || 0}</span> following</span>
           </div>
@@ -2101,7 +2100,7 @@ async function loadProfile(userId) {
       </div>
 
       <div class="section-header" style="margin-top:40px">
-        <h2>Published Stories</h2>
+        <h2>Published Journals</h2>
       </div>
       ${stories.length > 0 ? `
         <div class="stories-grid">
@@ -2110,8 +2109,8 @@ async function loadProfile(userId) {
       ` : `
         <div class="empty-state">
           <div class="empty-state-icon">📝</div>
-          <h3>No published stories</h3>
-          <p>${isOwn ? 'Write your first story and share it with the world!' : 'This author hasn\'t published any stories yet.'}</p>
+          <h3>No published journals</h3>
+          <p>${isOwn ? 'Create your first journal and share your thoughts!' : 'This user hasn\'t published any journals yet.'}</p>
         </div>
       `}
     `;
@@ -2192,9 +2191,9 @@ async function loadReadingList() {
       $('readingListGrid').innerHTML = `
         <div class="empty-state" style="grid-column:1/-1">
           <div class="empty-state-icon">📚</div>
-          <h3>Your reading list is empty</h3>
-          <p>Browse stories and add some to your reading list!</p>
-          <button class="btn btn-primary" onclick="navigate('browse')">Browse Stories</button>
+          <h3>Your bookmarks are empty</h3>
+          <p>Browse journals and bookmark your favorites!</p>
+          <button class="btn btn-primary" onclick="navigate('browse')">Browse Journals</button>
         </div>`;
       return;
     }

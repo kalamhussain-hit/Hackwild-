@@ -116,7 +116,7 @@ app.get('*', (req, res) => {
 /* ─────────── Start Server ─────────── */
 if (require.main === module) {
     app.listen(PORT, () => {
-        console.log(`✒️  InkWell running at http://localhost:${PORT}`);
+        console.log(`🪞  Mood Mirror running at http://localhost:${PORT}`);
     });
 }
 

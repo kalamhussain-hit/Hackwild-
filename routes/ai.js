@@ -18,7 +18,7 @@ router.post('/refine', authenticateToken, async (req, res) => {
         const { content, instruction } = req.body;
 
         if (!content) {
-            return res.status(400).json({ error: 'Content is required for AI refinement.' });
+            return res.status(400).json({ error: 'Content is required for AI mood analysis.' });
         }
 
         if (!GROQ_API_KEY || !groq) {
@@ -27,17 +27,17 @@ router.post('/refine', authenticateToken, async (req, res) => {
             });
         }
 
-        const prompt = `You are an expert co-author and editor for a creative writing platform. 
-Your task is to refine, polish, and improve the provided story chapter content.
+        const prompt = `You are an expert emotional analyzer and mental wellness guide for the 'Mood Mirror' application. 
+Your task is to analyze the user's journal entry content, identify their emotional state, highlight key sentiments, and provide constructive, empathetic feedback and reflection (the 'mirror' effect).
 
-User's instruction for this edit: "${instruction || 'Polishing, fixing grammar, and improving flow and description.'}"
+User's specific instruction/focus for this analysis: "${instruction || 'Providing general mood reflection and emotional support.'}"
 
 ---
-Original Content:
+Journal Entry Content:
 ${content}
 ---
 
-Provide only the improved version of the chapter content. Do not add any conversational intros, explanations, or outros. Your response must contain only the polished text.`;
+Provide an empathetic response with emotional analysis, key sentiment themes, and reflection. Keep it concise, helpful, and supportive.`;
 
         const completion = await groq.chat.completions.create({
             messages: [
@@ -56,7 +56,7 @@ Provide only the improved version of the chapter content. Do not add any convers
         res.json({ refinedContent: refinedContent.trim() });
     } catch (err) {
         console.error('Groq AI error:', err);
-        res.status(500).json({ error: `AI refinement failed: ${err.message}` });
+        res.status(500).json({ error: `AI mood analysis failed: ${err.message}` });
     }
 });
 
